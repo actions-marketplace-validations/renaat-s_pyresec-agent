@@ -44,14 +44,36 @@ PYRESEC_URL = os.getenv(
 PYRESEC_SENDER = os.getenv("PYRESEC_SENDER", "onboarding@resend.dev")
 PYRESEC_FROM_NAME = os.getenv("PYRESEC_FROM_NAME", "PYRESEC Agent")
 
-# GitHub Search queries — repos pushed recently with Web3 or FastAPI stacks
+# GitHub Search queries — repos pushed recently with target tech stacks
 # Uses keyword searches (filename: syntax doesn't combine well with pushed:)
 SEARCH_QUERIES = [
+    # Web3 / Smart Contracts
     {"query": "foundry solidity pushed:>={date}", "type": "web3", "label": "Foundry/Solidity"},
     {"query": "hardhat ethereum pushed:>={date}", "type": "web3", "label": "Hardhat/Ethereum"},
     {"query": "solidity smart contract pushed:>={date}", "type": "web3", "label": "Solidity Contract"},
-    {"query": "fastapi language:python pushed:>={date}", "type": "fastapi", "label": "FastAPI"},
     {"query": "web3.py blockchain pushed:>={date}", "type": "web3", "label": "Web3.py"},
+    {"query": "smart contract deployment pushed:>={date}", "type": "web3", "label": "Contract Deploy"},
+    {"query": "erc20 token pushed:>={date}", "type": "web3", "label": "ERC20 Token"},
+    {"query": "defi protocol pushed:>={date}", "type": "web3", "label": "DeFi Protocol"},
+    {"query": "base mainnet pushed:>={date}", "type": "web3", "label": "Base Mainnet"},
+    {"query": "nft contract solidity pushed:>={date}", "type": "web3", "label": "NFT Contract"},
+    {"query": "solidity audit pushed:>={date}", "type": "web3", "label": "Solidity Audit"},
+    {"query": "ethers.js hardhat pushed:>={date}", "type": "web3", "label": "Ethers.js"},
+    {"query": "vyper contract pushed:>={date}", "type": "web3", "label": "Vyper Contract"},
+    {"query": "rust solana program pushed:>={date}", "type": "web3", "label": "Solana Rust"},
+    {"query": "move aptos smart contract pushed:>={date}", "type": "web3", "label": "Move/Aptos"},
+    # Backend / FastAPI
+    {"query": "fastapi language:python pushed:>={date}", "type": "fastapi", "label": "FastAPI"},
+    {"query": "fastapi uvicorn pushed:>={date}", "type": "fastapi", "label": "FastAPI Uvicorn"},
+    {"query": "django rest framework pushed:>={date}", "type": "fastapi", "label": "Django DRF"},
+    {"query": "flask api pushed:>={date}", "type": "fastapi", "label": "Flask API"},
+    {"query": "express node api pushed:>={date}", "type": "fastapi", "label": "Express API"},
+    {"query": "next.js api routes pushed:>={date}", "type": "fastapi", "label": "Next.js API"},
+    {"query": "graphql api server pushed:>={date}", "type": "fastapi", "label": "GraphQL API"},
+    # General security-interest targets
+    {"query": "authentication jwt security pushed:>={date}", "type": "fastapi", "label": "Auth/JWT"},
+    {"query": "payment stripe integration pushed:>={date}", "type": "fastapi", "label": "Payments"},
+    {"query": "docker kubernetes deploy pushed:>={date}", "type": "fastapi", "label": "DevOps"},
 ]
 
 # Deduplication file
