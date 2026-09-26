@@ -1,6 +1,10 @@
 name: 'PYRESEC Security Scan'
-description: 'Scan code for security vulnerabilities via PYRESEC AI'
-author: 'NanoClone Life Sciences Ltd.'
+description: 'Scan code for security vulnerabilities via PYRESEC AI. SAST/SCA audits from $0.01 USDC via x402 micropayments.'
+author: 'NanoClone Systems Ltd.'
+
+branding:
+  icon: 'shield'
+  color: 'red'
 
 inputs:
   code-path:

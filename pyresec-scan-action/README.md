@@ -1,15 +1,24 @@
 # PYRESEC Security Scan — GitHub Action
 
-Scan your code for security vulnerabilities using PYRESEC AI. Pay-per-scan via x402 USDC micropayments on Base.
+[![GitHub Marketplace](https://img.shields.io/badge/GitHub-Marketplace-blue)](https://github.com/marketplace)
+[![Network: Base](https://img.shields.io/badge/Network-Base%20Mainnet-blue)](https://basescan.org)
+[![Protocol: x402](https://img.shields.io/badge/Protocol-x402-green)](https://x402.org)
+[![Price: $0.01](https://img.shields.io/badge/Price-%240.01%20USDC-brightgreen)](https://pyresec-agent-519576377065.us-central1.run.app/docs)
 
-## Setup
+AI-powered code security auditing via x402 USDC micropayments. No accounts, no API keys — just a wallet and your code.
+
+## What It Does
+
+Scans your source code for vulnerabilities (SQL injection, XSS, command injection, hardcoded secrets, and more) using PYRESEC's AI security engine. Returns findings with CWE IDs and line numbers.
+
+## Quick Setup
 
 1. Add your x402 wallet private key as a GitHub Secret:
-   - Go to **Settings > Secrets and variables > Actions**
-   - Create a new secret named `X402_WALLET_KEY`
-   - Paste your Base wallet private key
+   - **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `X402_WALLET_KEY`
+   - Value: Your Base wallet private key (must have USDC on Base Mainnet)
 
-2. Add the action to your workflow:
+2. Add to your workflow:
 
 ```yaml
 - name: PYRESEC Security Scan
@@ -20,27 +29,30 @@ Scan your code for security vulnerabilities using PYRESEC AI. Pay-per-scan via x
     x402-wallet-key: ${{ secrets.X402_WALLET_KEY }}
 ```
 
+## Pricing
+
+| Tier | Cost | What You Get |
+|------|------|-------------|
+| `quick-scan` | $0.01 USDC | Top 3 SAST findings by severity |
+| `deep-repo` | $0.50 USDC | OWASP Top 10 + SCA + logic + gas |
+| `remediate` | $5.00 USDC | Auto-patched code output |
+
 ## Inputs
 
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
 | `code-path` | Yes | `./src` | Path to directory or file to scan |
-| `tier` | No | `quick-scan` | `quick-scan` ($0.01), `deep-repo` ($0.50), or `remediate` ($5.00) |
-| `x402-wallet-key` | Yes | — | Private key for x402 USDC payment on Base |
-| `pyresec-url` | No | `https://pyresec-agent-519576377065.us-central1.run.app` | PYRESEC API base URL |
-| `fail-on-findings` | No | `true` | Fail the workflow if vulnerabilities are found |
+| `tier` | No | `quick-scan` | Scan tier (see pricing above) |
+| `x402-wallet-key` | Yes | — | Private key for x402 USDC payment |
+| `pyresec-url` | No | Production URL | PYRESEC API base URL |
+| `fail-on-findings` | No | `true` | Fail workflow if vulnerabilities found |
 
 ## Outputs
 
-The action uploads `pyresec-results.json` as an artifact with the full scan results.
+- `pyresec-results.json` — Full scan results (uploaded as artifact)
+- `pyresec-patched.py` — Patched code (remediate tier only)
 
-For `remediate` tier, `pyresec-patched.py` is also uploaded with the fixed code.
-
-## Supported Languages
-
-Python, JavaScript, TypeScript, Solidity, Go, Rust, Java
-
-## Example: Full Workflow
+## Full Workflow Example
 
 ```yaml
 name: Security Scan
@@ -60,7 +72,7 @@ jobs:
           tier: quick-scan
           x402-wallet-key: ${{ secrets.X402_WALLET_KEY }}
 
-      - name: PYRESEC Deep Audit (on main branch only)
+      - name: PYRESEC Deep Audit (main only)
         if: github.ref == 'refs/heads/main'
         uses: nanoclone-ltd/pyresec-scan-action@main
         with:
@@ -69,12 +81,16 @@ jobs:
           x402-wallet-key: ${{ secrets.X402_WALLET_KEY }}
 ```
 
-## Pricing
+## Supported Languages
 
-Each scan costs USDC on Base Mainnet via x402 micropayments:
+Python, JavaScript, TypeScript, Solidity, Go, Rust, Java
 
-| Tier | Cost | What It Does |
-|------|------|-------------|
-| quick-scan | $0.01 | Top 3 SAST findings |
-| deep-repo | $0.50 | Full OWASP + SCA + logic + gas |
-| remediate | $5.00 | Auto-patched code output |
+## Links
+
+- **Live API:** https://pyresec-agent-519576377065.us-central1.run.app/docs
+- **MCP Manifest:** https://pyresec-agent-519576377065.us-central1.run.app/mcp/manifest.json
+- **Company:** [nanoclonesystems.com](https://nanoclonesystems.com/)
+
+---
+
+**NanoClone Systems Ltd.** — Proprietary. See [LICENSE](../LICENSE).
