@@ -1,0 +1,57 @@
+name: 'PYRESEC Security Scan'
+description: 'Scan code for security vulnerabilities via PYRESEC AI. SAST/SCA audits from $0.01 USDC via x402 micropayments.'
+author: 'NanoClone Systems Ltd.'
+
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  code-path:
+    description: 'Path to directory or file to scan'
+    required: true
+    default: './src'
+  tier:
+    description: 'Scan tier: quick-scan, deep-repo, or remediate'
+    required: false
+    default: 'quick-scan'
+  x402-wallet-key:
+    description: 'Private key for x402 USDC payment on Base'
+    required: true
+  pyresec-url:
+    description: 'PYRESEC API base URL'
+    required: false
+    default: 'https://pyresec-agent-519576377065.us-central1.run.app'
+  fail-on-findings:
+    description: 'Fail the workflow if vulnerabilities are found'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install x402 requests
+
+    - name: Run PYRESEC scan
+      shell: bash
+      env:
+        CODE_PATH: ${{ inputs.code-path }}
+        TIER: ${{ inputs.tier }}
+        WALLET_KEY: ${{ inputs.x402-wallet-key }}
+        PYRESEC_URL: ${{ inputs.pyresec-url }}
+        FAIL_ON_FINDINGS: ${{ inputs.fail-on-findings }}
+      run: python ${{ github.action_path }}/scan.py
+
+    - name: Upload results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pyresec-results
+        path: pyresec-results.json
