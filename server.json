@@ -1,81 +1,18 @@
 {
-  "$schema": "https://registry.modelcontextprotocol.io/schemas/server/v0.1.json",
-  "name": "com.nanoclone.pyresec-agent",
-  "version": "2.0.0",
-  "description": "Enterprise-grade Automated Code Security Auditing (SAST/SCA) via x402 USDC micropayments on Base. Quick scans at $0.01, deep audits at $0.50, automated remediation at $5.00. Supports OWASP Top 10, dependency scanning, Solidity gas optimization, and code patching. Works with any MCP-compatible client (Claude, Cursor, etc.).",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.renaat-s/pyresec-agent",
+  "version": "2.0.1",
+  "title": "PYRESEC - AI Code Security Auditing",
+  "description": "AI code security audits via x402 USDC: $0.01 scans, $0.50 audits, $5 auto-fixes. SAST/SCA.",
+  "websiteUrl": "https://pyresec-agent-519576377065.us-central1.run.app/docs",
   "repository": {
-    "type": "git",
-    "url": "https://github.com/renaat-s/pyresec-agent"
+    "url": "https://github.com/renaat-s/pyresec-agent",
+    "source": "github"
   },
-  "homepage": "https://pyresec-agent-519576377065.us-central1.run.app/docs",
-  "license": "Proprietary",
-  "author": {
-    "name": "NanoClone Life Sciences Ltd.",
-    "url": "https://nanoclonesystems.com/"
-  },
-  "transport": {
-    "type": "streamable-http",
-    "url": "https://pyresec-agent-519576377065.us-central1.run.app/mcp"
-  },
-  "tools": [
+  "remotes": [
     {
-      "name": "quick_scan",
-      "description": "Fast SAST security scan. Returns top 3 findings by severity with CWE IDs and line numbers. Costs $0.01 USDC on Base via x402 micropayment.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Source code to scan for vulnerabilities"
-          }
-        },
-        "required": ["code"]
-      }
-    },
-    {
-      "name": "deep_audit",
-      "description": "Comprehensive security audit: OWASP Top 10, SCA dependency scanning, logic flaw detection, Solidity gas optimization. Costs $0.50 USDC on Base via x402 micropayment.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Source code for full security audit"
-          }
-        },
-        "required": ["code"]
-      }
-    },
-    {
-      "name": "remediate_code",
-      "description": "Identifies all vulnerabilities and generates patched, production-ready code with change explanations and security notes. Costs $5.00 USDC on Base via x402 micropayment.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Vulnerable code to remediate"
-          }
-        },
-        "required": ["code"]
-      }
+      "type": "streamable-http",
+      "url": "https://pyresec-agent-519576377065.us-central1.run.app/mcp"
     }
-  ],
-  "capabilities": {
-    "tools": {}
-  },
-  "metadata": {
-    "category": "security",
-    "tags": ["SAST", "SCA", "security-audit", "x402", "USDC", "Base", "code-security", "vulnerability-scanning", "OWASP", "remediation", "MCP"],
-    "pricing": {
-      "currency": "USDC",
-      "network": "base-mainnet",
-      "protocol": "x402",
-      "tiers": [
-        {"name": "quick_scan", "cost": "$0.01"},
-        {"name": "deep_audit", "cost": "$0.50"},
-        {"name": "remediate_code", "cost": "$5.00"}
-      ]
-    }
-  }
+  ]
 }

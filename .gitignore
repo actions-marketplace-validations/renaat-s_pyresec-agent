@@ -20,3 +20,9 @@ gcloud-sdk.zip
 gcloud-installer.exe
 .env.test_client
 scripts/.seen_repos.json
+scripts/.social_scanner_state.json
+scripts/.social_scanner.lock
+scripts/.social_scans_today.json
+scripts/.reply_queue.json
+scripts/.farcaster_state.json
+scripts/.telegram_chat_id
