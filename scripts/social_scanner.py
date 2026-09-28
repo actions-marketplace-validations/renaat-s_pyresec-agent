@@ -44,6 +44,9 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
 
 import httpx
 
+import playbooks
+import probe
+
 # ==================== CONFIGURATION ====================
 
 PYRESEC_URL = os.getenv(
@@ -57,6 +60,8 @@ NEYNAR_API_KEY = os.getenv("NEYNAR_API_KEY", "") or os.getenv("WARPCAST_API_KEY"
 
 SCAN_PROMO_BUDGET = int(os.getenv("SCAN_PROMO_BUDGET", "10"))
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "300"))
+# Paid x402 promo scan on top of the free local proof (needs funded PROMO_WALLET_KEY)
+SPONSORED_SCANS = os.getenv("SPONSORED_SCANS", "").lower() in ("1", "true", "yes")
 
 # Keyword targets — posts/casts containing these trigger a scan
 KEYWORDS = [
@@ -356,6 +361,39 @@ def sponsored_quick_scan(code: str) -> Optional[dict]:
 
 # ==================== DAILY BUDGET TRACKING ====================
 
+def qualify_and_scan(github_repo: str, verbose: bool = True) -> dict:
+    """ICP-gate a repo, then run free local proof (+ optional sponsored scan).
+
+    Returns {"scan", "score", "playbook", "kind"} — scan=None means not a lead.
+    """
+    info = probe.repo_info(github_repo) or {}
+    score = playbooks.score_repo(info)
+    if score < playbooks.ICP_MIN_SCORE:
+        if verbose:
+            print(f"  [ICP] score {score} < {playbooks.ICP_MIN_SCORE} — not a lead")
+        return {"scan": None, "score": score, "playbook": None,
+                "kind": "unqualified"}
+
+    code = probe.fetch_repo_main_file(github_repo)
+    if not code:
+        if verbose:
+            print("  [PROOF] no scannable entry file — not a lead")
+        return {"scan": None, "score": score, "playbook": None, "kind": "no_code"}
+
+    scan = probe.local_scan(code)
+    kind = "local"
+    if SPONSORED_SCANS:
+        sponsored = sponsored_quick_scan(code)
+        if sponsored:
+            scan = sponsored
+            kind = "sponsored"
+
+    if verbose:
+        print(f"  [PROOF] {scan.get('total_findings', 0)} finding(s) | "
+              f"ICP {score} | playbook: {playbooks.pick_playbook(scan)}")
+    return {"scan": scan, "score": score,
+            "playbook": playbooks.pick_playbook(scan), "kind": kind}
+
 def load_daily_scans() -> dict:
     if os.path.exists(DAILY_SCANS_FILE):
         with open(DAILY_SCANS_FILE, "r") as f:
@@ -387,59 +425,26 @@ def record_promo_scan():
 
 # ==================== REPLY GENERATOR ====================
 
-def generate_reply(post: dict, scan_result: Optional[dict], github_repo: Optional[str]) -> str:
+def generate_reply(post: dict, scan_result: Optional[dict], github_repo: Optional[str],
+                   score: Optional[int] = None, playbook: str = "monitoring") -> str:
     """
-    Generate a structured Markdown reply draft.
+    Generate a structured Markdown reply draft (playbook copy).
     Returns the reply text ready to be posted.
     """
     author = post.get("author_username", "dev")
-    platform = post.get("platform", "social")
 
-    if scan_result:
-        findings = scan_result.get("sast_findings", [])
-        num_findings = len(findings)
-        file_hash = scan_result.get("file_hash", "")[:8]
+    if scan_result and github_repo:
+        return (f"Hey @{author} — "
+                f"{playbooks.social_reply({'repo': github_repo}, scan_result)}")[:1024]
 
-        severity_counts = {}
-        for f in findings:
-            sev = f.get("severity", "UNKNOWN")
-            severity_counts[sev] = severity_counts.get(sev, 0) + 1
+    # No proof (no repo link) — soft generic engagement
+    return f"""Hey @{author}, looks like you're building something cool!
 
-        severity_str = ", ".join(f"{v} {k}" for k, v in severity_counts.items()) if severity_counts else "Clean"
+Want a free security baseline of your repo? PYRESEC scans SAST/SCA straight from GitHub.
 
-        reply = f"""Hey @{author}, saw your post — ran a quick security scan on your code.
-
-**PYRESEC Quick Scan Results:**
-- Findings: {num_findings} ({severity_str})
-- File hash: `{file_hash}`
-- Scan tier: $0.01 USDC (sponsored)
-
-"""
-        if findings:
-            reply += "**Top findings:**\n"
-            for i, f in enumerate(findings[:3], 1):
-                reply += f"{i}. **[{f.get('severity', '?')}]** {f.get('type', 'Unknown')} — {f.get('cwe', 'N/A')} (line {f.get('line_number', '?')})\n"
-
-            reply += f"\nGet the full audit + auto-patch for $5.00:\n"
-        else:
-            reply += "Code looks clean. Want a deeper audit ($0.50) or auto-patch ($5.00)?\n"
-
-        if github_repo:
-            reply += f"\n{PYRESEC_URL}/docs"
-        else:
-            reply += f"\n{PYRESEC_URL}/docs"
-
-    else:
-        # No scan result — generic engagement
-        reply = f"""Hey @{author}, looks like you're building something cool!
-
-If you want a quick security check on your code, PYRESEC does SAST/SCA scans via x402 micropayments — no account needed.
-
-$0.01 for a quick scan | $0.50 for full audit | $5.00 for auto-patch
+Disclosure is free; verified patch + signed PDF is {playbooks.PRICE_REMEDIATION}, weekly monitoring {playbooks.PRICE_RETAINER}.
 
 {PYRESEC_URL}/docs"""
-
-    return reply
 
 
 # ==================== STATE MANAGEMENT ====================
@@ -519,6 +524,8 @@ def send_leads_to_telegram(replies: list[dict], verbose: bool = True) -> int:
             break
         if r["platform"] != "farcaster":
             continue
+        if not r.get("scanned"):
+            continue
         if not is_builder_lead(r["post"]):
             continue
 
@@ -527,7 +534,9 @@ def send_leads_to_telegram(replies: list[dict], verbose: bool = True) -> int:
             f"🔔 Lead {sent + 1}/{MAX_LEADS_PER_CYCLE} — Farcaster\n"
             f"@{r['post']['author_username']} ({r['post'].get('author_followers', 0)} followers)\n"
             f"Post: {r['post'].get('url', '')}\n"
-            f"Scanned: {'yes' if r['scanned'] else 'no'}"
+            f"Playbook: {(r.get('playbook') or 'n/a').upper()}"
+            + (f" | ICP {r['score']}" if r.get("score") else "")
+            + f" | scanned: {'yes' if r['scanned'] else 'no'}"
         )
         try:
             msg_id = telegram_app.send_lead(header, r["reply"], qid)
@@ -538,10 +547,14 @@ def send_leads_to_telegram(replies: list[dict], verbose: bool = True) -> int:
 
         queue.append({
             "qid": qid,
+            "kind": "farcaster_cast",
             "platform": "farcaster",
             "status": "pending",
             "tg_message_id": msg_id,
             "reply": r["reply"],
+            "playbook": r.get("playbook") or "monitoring",
+            "score": r.get("score"),
+            "repo": r.get("repo"),
             "cast_hash": r["post"].get("cast_hash", ""),
             "author_fid": r["post"].get("author_fid"),
             "author_username": r["post"].get("author_username", ""),
@@ -590,18 +603,61 @@ def handle_telegram_updates(updates: list[dict], verbose: bool = True) -> int:
             telegram_app.answer_callback(cb_id, f"Already {entry['status']}")
             continue
 
+        kind = entry.get("kind", "farcaster_cast")
         tg_msg = entry.get("tg_message_id")
 
         if action == "rj":
             entry["status"] = "rejected"
             telegram_app.answer_callback(cb_id, "Rejected")
             if tg_msg:
-                telegram_app.edit_message(
-                    tg_msg,
-                    f"❌ Rejected — @{entry['author_username']}\n{entry['post_url']}",
-                )
+                if kind == "email_batch":
+                    telegram_app.edit_message(
+                        tg_msg,
+                        f"❌ Rejected outreach batch\n{entry.get('summary', '')}",
+                    )
+                else:
+                    telegram_app.edit_message(
+                        tg_msg,
+                        f"❌ Rejected — @{entry['author_username']}\n{entry['post_url']}",
+                    )
             if verbose:
-                print(f"  [TG] Rejected @{entry['author_username']}")
+                print(f"  [TG] Rejected batch/cast ({kind})")
+            handled += 1
+            continue
+
+        # === APPROVE → send outreach batch ===
+        if kind == "email_batch":
+            telegram_app.answer_callback(cb_id, "Sending...")
+            import git_scraper
+            import revenue_ledger
+            emails = entry.get("emails", [])
+            sent = 0
+            failures = []
+            for item in emails:
+                try:
+                    ok = git_scraper.send_email(
+                        item["to"], item["subject"], item["body"])
+                except Exception as e:
+                    ok = False
+                    failures.append(f"{item.get('repo', '?')} ({e})")
+                if ok:
+                    sent += 1
+                    revenue_ledger.record(
+                        item.get("playbook", "remediation"), "proof_sent",
+                        0, item.get("repo", ""), "email")
+                else:
+                    failures.append(item.get("repo", "?"))
+                time.sleep(0.5)
+            entry["status"] = "sent"
+            entry["sent_count"] = sent
+            if tg_msg:
+                text = (f"✅ {sent}/{len(emails)} proof emails sent\n"
+                        f"{entry.get('summary', '')}")
+                if failures:
+                    text += "\nfailed: " + ", ".join(failures[:5])
+                telegram_app.edit_message(tg_msg, text)
+            if verbose:
+                print(f"  [TG] Outreach batch sent: {sent}/{len(emails)}")
             handled += 1
             continue
 
@@ -616,6 +672,13 @@ def handle_telegram_updates(updates: list[dict], verbose: bool = True) -> int:
             )
             entry["status"] = "posted"
             entry["cast_url"] = result.get("url", "")
+            try:
+                import revenue_ledger
+                revenue_ledger.record(
+                    entry.get("playbook") or "monitoring", "proof_sent", 0,
+                    entry.get("repo") or "", "farcaster")
+            except Exception:
+                pass
             if tg_msg:
                 telegram_app.edit_message(
                     tg_msg,
@@ -671,24 +734,30 @@ def poll_once(platforms: list[str], dry_run: bool = False, verbose: bool = True)
                 github_urls = extract_github_urls(post["text"])
                 github_repo = github_urls[0] if github_urls else None
                 scan_result = None
+                score = None
+                playbook = "monitoring"
 
-                # If we found a GitHub repo, try to scan it
                 if github_repo:
                     if verbose:
                         print(f"  Found repo: {github_repo}")
-                    code = fetch_repo_main_file(github_repo)
-                    if code:
-                        if verbose:
-                            print(f"  Scanning {len(code)} chars of code...")
-                        scan_result = sponsored_quick_scan(code)
+                    res = qualify_and_scan(github_repo, verbose=verbose)
+                    scan_result = res["scan"]
+                    score = res["score"]
+                    if res["kind"] == "unqualified":
+                        mark_seen(post["id"], state)
+                        continue
+                    if res["playbook"]:
+                        playbook = res["playbook"]
 
-                # Generate reply
-                reply = generate_reply(post, scan_result, github_repo)
+                reply = generate_reply(post, scan_result, github_repo, score, playbook)
                 replies.append({
                     "platform": "x",
                     "post": post,
                     "reply": reply,
                     "scanned": scan_result is not None,
+                    "score": score,
+                    "playbook": playbook,
+                    "repo": github_repo,
                 })
 
                 if verbose:
@@ -711,22 +780,30 @@ def poll_once(platforms: list[str], dry_run: bool = False, verbose: bool = True)
                 github_urls = extract_github_urls(cast["text"])
                 github_repo = github_urls[0] if github_urls else None
                 scan_result = None
+                score = None
+                playbook = "monitoring"
 
                 if github_repo:
                     if verbose:
                         print(f"  Found repo: {github_repo}")
-                    code = fetch_repo_main_file(github_repo)
-                    if code:
-                        if verbose:
-                            print(f"  Scanning {len(code)} chars of code...")
-                        scan_result = sponsored_quick_scan(code)
+                    res = qualify_and_scan(github_repo, verbose=verbose)
+                    scan_result = res["scan"]
+                    score = res["score"]
+                    if res["kind"] == "unqualified":
+                        mark_seen(cast["id"], state)
+                        continue
+                    if res["playbook"]:
+                        playbook = res["playbook"]
 
-                reply = generate_reply(cast, scan_result, github_repo)
+                reply = generate_reply(cast, scan_result, github_repo, score, playbook)
                 replies.append({
                     "platform": "farcaster",
                     "post": cast,
                     "reply": reply,
                     "scanned": scan_result is not None,
+                    "score": score,
+                    "playbook": playbook,
+                    "repo": github_repo,
                 })
 
                 if verbose:

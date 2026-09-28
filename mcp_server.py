@@ -87,6 +87,30 @@ async def list_tools():
                 "required": ["code", "findings"]
             }
         ),
+        Tool(
+            name="pyresec_engagement_remediation",
+            description="Proof-led remediation engagement: exhaustive audit, patched code, and a client PDF security report (base64). Costs $500.00 USDC via x402 micropayment.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "Repository source code for the engagement"
+                    },
+                    "meta": {
+                        "type": "object",
+                        "description": "Client metadata: client, repo_url, engagement, contact",
+                        "properties": {
+                            "client": {"type": "string"},
+                            "repo_url": {"type": "string"},
+                            "engagement": {"type": "string"},
+                            "contact": {"type": "string"},
+                        }
+                    }
+                },
+                "required": ["code"]
+            }
+        ),
     ]
 
 
@@ -97,6 +121,7 @@ async def call_tool(name: str, arguments: dict):
             "pyresec_quick_scan": "/v1/audit/quick-scan",
             "pyresec_deep_audit": "/v1/audit/deep-repo",
             "pyresec_remediate": "/v1/audit/remediate",
+            "pyresec_engagement_remediation": "/v1/engagement/remediation",
         }
 
         endpoint = endpoint_map.get(name)
