@@ -33,6 +33,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Windows console: allow unicode in names/subjects (CMD defaults to cp1252)
+if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
+import playbooks
+import probe
+import revenue_ledger
+
 # ==================== CONFIGURATION ====================
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # Optional but recommended — raises rate limit from 10 to 30 req/min
@@ -315,12 +325,68 @@ def send_email(to_email: str, subject: str, body: str, html: str = None) -> bool
             return False
 
 
+# ==================== BATCH DISPATCH (Telegram-gated) ====================
+
+def dispatch_batch(batch: list[dict], direct: bool = False) -> int:
+    """Send immediately (--direct / OUTREACH_DIRECT) or gate behind ONE Telegram tap."""
+    import telegram_app
+
+    if not batch:
+        return 0
+
+    if os.getenv("OUTREACH_DIRECT", "").lower() in ("1", "true", "yes"):
+        direct = True
+
+    if direct or not telegram_app.configured():
+        sent = 0
+        for item in batch:
+            if send_email(item["to"], item["subject"], item["body"]):
+                sent += 1
+                revenue_ledger.record(item["playbook"], "proof_sent", 0,
+                                      item["repo"], "email")
+                print(f"  [SENT] {item['repo']} -> {item['to']}")
+            else:
+                print(f"  [FAILED] {item['repo']}")
+            time.sleep(RESEND_API_DELAY)
+        return sent
+
+    # One Telegram message, one tap for the whole batch
+    import social_scanner
+
+    qid = f"email-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
+    n_rem = sum(1 for i in batch if i["playbook"] == "remediation")
+    n_mon = len(batch) - n_rem
+    summary_line = (f"{len(batch)} qualified leads | "
+                    f"{n_rem} remediation, {n_mon} monitoring")
+
+    lines = []
+    for item in batch[:35]:
+        tag = item["playbook"][:4].upper()
+        lines.append(f"{item['repo']}  [{tag}] {item['rating']} "
+                     f"{item['findings']}f -> {item['to']}")
+    if len(batch) > 35:
+        lines.append(f"... and {len(batch) - 35} more")
+
+    header = f"📧 OUTREACH BATCH\n{summary_line}"
+    msg_id = telegram_app.send_lead(header, "\n".join(lines), qid)
+
+    queue = social_scanner.load_queue()
+    queue.append({
+        "qid": qid, "kind": "email_batch", "status": "pending",
+        "tg_message_id": msg_id, "emails": batch, "summary": summary_line,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    social_scanner.save_queue(queue)
+    print(f"  [GATE] batch queued for Telegram approval (qid={qid}, {len(batch)} emails)")
+    return 0
+
+
 # ==================== MAIN PIPELINE ====================
 
-def run_scraper(dry_run: bool = False, max_repos: int = 30):
+def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False):
     """Main scraper pipeline."""
     print("=" * 60)
-    print("  PYRESEC Git Scraper — Outbound Lead Generation")
+    print("  PYRESEC Git Scraper — High-Ticket Outreach (proof-led)")
     print("=" * 60)
     print()
 
@@ -328,8 +394,11 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30):
     seen = load_seen_repos()
     contacted = 0
     skipped = 0
+    batch: list[dict] = []
 
     for query_config in SEARCH_QUERIES:
+        if len(batch) >= max_repos:
+            break
         query = query_config["query"].format(date=date_threshold)
         file_type = query_config["type"]
         label = query_config["label"]
@@ -339,7 +408,7 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30):
         time.sleep(GITHUB_API_DELAY)
 
         for repo in repos:
-            if contacted >= max_repos:
+            if len(batch) >= max_repos:
                 print(f"\n[DONE] Reached max_repos limit ({max_repos})")
                 break
 
@@ -366,32 +435,52 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30):
             name = author["name"]
             print(f"    Author: {name} <{email}>")
 
-            # Build email
-            subject = build_email_subject(repo["name"], file_type)
-            body = build_email_body(full_name, repo_url, file_type)
-            html = build_email_html(full_name, file_type)
+            # --- ICP qualification (funded-team heuristic) ---
+            score = playbooks.score_repo(repo)
+            if score < playbooks.ICP_MIN_SCORE:
+                print(f"    [ICP] score {score} below {playbooks.ICP_MIN_SCORE} - not a target")
+                continue
+
+            # --- Free proof: fetch entry file + local scan ---
+            code = probe.fetch_repo_main_file(full_name)
+            if not code:
+                print(f"    [PROOF] no scannable entry file - skip")
+                seen.add(full_name)
+                continue
+
+            scan = probe.local_scan(code)
+            playbook = playbooks.pick_playbook(scan)
+            rating = playbooks.risk_rating(scan)
+            lead = {"name": name, "email": email, "repo": full_name, "repo_url": repo_url}
+            subject, body = playbooks.build_email(playbook, lead, scan)
+            print(f"    [ICP] {score} | proof: {scan['total_findings']} finding(s) "
+                  f"({rating}) | playbook: {playbook}")
+
+            batch.append({
+                "to": email, "subject": subject, "body": body,
+                "repo": full_name, "playbook": playbook,
+                "score": score, "rating": rating,
+                "findings": scan["total_findings"],
+            })
 
             if dry_run:
-                print(f"    [DRY RUN] Would send to {email}")
-                print(f"    Subject: {subject}")
-            else:
-                print(f"    Sending to {email}...")
-                success = send_email(email, subject, body, html=html)
-                if success:
-                    print(f"    [SENT] Email delivered")
-                    contacted += 1
-                else:
-                    print(f"    [FAILED] Email not sent")
-                time.sleep(RESEND_API_DELAY)
+                print(f"    [DRY RUN] would queue -> {email}")
+                print(f"      subject: {subject}")
+                print(f"      body preview: {body[:220].strip()}...")
 
             seen.add(full_name)
 
     # Save dedup state
     save_seen_repos(seen)
 
+    if dry_run:
+        print(f"\n[DRY RUN] {len(batch)} qualified email(s) built — nothing sent")
+    elif batch:
+        contacted = dispatch_batch(batch, direct=direct)
+
     print()
     print("=" * 60)
-    print(f"  Complete. Contacted: {contacted} | Skipped (seen): {skipped}")
+    print(f"  Complete. Qualified: {len(batch)} | Sent/queued: {contacted} | Skipped (seen): {skipped}")
     print("=" * 60)
 
 
@@ -401,6 +490,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="PYRESEC Git Scraper")
     parser.add_argument("--dry-run", action="store_true", help="Preview without sending emails")
     parser.add_argument("--max-repos", type=int, default=30, help="Max repos to contact per run")
+    parser.add_argument("--direct", action="store_true",
+                        help="Send immediately instead of gating via Telegram")
     args = parser.parse_args()
 
     if not RESEND_API_KEY and not args.dry_run:
@@ -408,4 +499,4 @@ if __name__ == "__main__":
         print("Set it in your environment or .env file.")
         print()
 
-    run_scraper(dry_run=args.dry_run, max_repos=args.max_repos)
+    run_scraper(dry_run=args.dry_run, max_repos=args.max_repos, direct=args.direct)

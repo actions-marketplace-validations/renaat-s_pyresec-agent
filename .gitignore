@@ -26,3 +26,5 @@ scripts/.social_scans_today.json
 scripts/.reply_queue.json
 scripts/.farcaster_state.json
 scripts/.telegram_chat_id
+scripts/.revenue_ledger.json
+reports/

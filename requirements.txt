@@ -11,3 +11,4 @@ web3
 eth-account
 mcp>=2.0.0
 httpx
+fpdf2

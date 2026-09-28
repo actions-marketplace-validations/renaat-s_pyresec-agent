@@ -17,7 +17,10 @@ from dotenv import load_dotenv
 
 from wallet_interface import pay_server_bill, get_spending_summary, check_spending_limits
 from audit_logger import log_event, log_transaction, log_api_call, log_audit_scan, log_kill_switch, log_heartbeat, log_replication, get_recent_logs
-from agent_controller import quick_scan_with_llm, deep_audit_with_llm, remediate_code_with_llm
+from agent_controller import (
+    quick_scan_with_llm, deep_audit_with_llm, remediate_code_with_llm,
+    run_sast_scan, run_sca_scan, run_gas_optimization_scan, compute_file_hash,
+)
 from population_controller import (
     register_agent, deregister_agent, get_population_status,
     is_kill_switch_active, trigger_kill_switch, reset_kill_switch, MAX_ACTIVE_AGENTS
@@ -267,6 +270,7 @@ async def payment_logging_middleware(request: Request, call_next):
                 "/v1/audit/quick-scan": ("Quick Scan", 0.01),
                 "/v1/audit/deep-repo": ("Deep Audit", 0.50),
                 "/v1/audit/remediate": ("Remediation", 5.00),
+                "/v1/engagement/remediation": ("Engagement Remediation", 500.00),
             }
             tier_name, tier_amount = tier_map.get(path, ("unknown", 0))
             log_payment(
@@ -409,6 +413,137 @@ async def remediate_code(request: Request):
         "model": result["model"]
     }
 
+# ==================== ENGAGEMENT: PROOF-LED REMEDIATION ($500 USDC) ====================
+
+def _format_llm_analysis(llm) -> str:
+    """Flatten the deep-audit LLM JSON into readable report prose."""
+    if not llm:
+        return ""
+    if isinstance(llm, str):
+        return llm
+    parts = []
+    if llm.get("risk_level"):
+        parts.append(f"Risk level: {llm['risk_level']}.")
+    if llm.get("summary"):
+        parts.append(str(llm["summary"]))
+    for key in ("owasp_findings", "logic_flaws", "recommendations"):
+        items = llm.get(key) or []
+        if items:
+            parts.append(key.replace("_", " ").title() + ":")
+            for item in items[:8]:
+                text = json.dumps(item, ensure_ascii=False) if isinstance(item, (dict, list)) else str(item)
+                parts.append(f"- {text}")
+    return "\n".join(parts)[:2200]
+
+
+async def _run_engagement(code: str, meta: dict) -> dict:
+    """Full $500 engagement pipeline: audit + patch + client PDF report.
+
+    A failed LLM call or report render must never void a paid delivery —
+    every stage degrades instead of raising.
+    """
+    audit = remediation = None
+    try:
+        audit = await deep_audit_with_llm(code, groq_client)
+    except Exception as e:
+        log_event("ENGAGEMENT_ERROR", f"deep_audit failed: {e}", "WARNING")
+    try:
+        remediation = await remediate_code_with_llm(code, groq_client)
+    except Exception as e:
+        log_event("ENGAGEMENT_ERROR", f"remediate failed: {e}", "WARNING")
+
+    base = audit or remediation or {}
+    sast = base.get("sast_findings") or run_sast_scan(code, full=True)
+    sca = base.get("sca_findings") or run_sca_scan(code)
+    gas = base.get("gas_findings") or run_gas_optimization_scan(code)
+    rem = (remediation or {}).get("remediation") or {}
+
+    scan = {
+        "status": "success",
+        "file_hash": base.get("file_hash") or compute_file_hash(code),
+        "sast_findings": sast,
+        "sca_findings": sca,
+        "gas_findings": gas,
+        "agent": AGENT_ADDRESS,
+        "model": base.get("model", "qwen/qwen3.8-27b"),
+        "llm_analysis": _format_llm_analysis((audit or {}).get("llm_analysis")),
+        "remediation": rem,
+        "changes_made": rem.get("changes_made", []),
+        "security_notes": rem.get("security_notes", []),
+        "patched_code": rem.get("patched_code"),
+    }
+
+    report_b64 = None
+    report_name = None
+    try:
+        import tempfile
+        from scripts.report_generator import generate_report
+        out_dir = os.path.join(tempfile.gettempdir(), "pyresec_reports")
+        pdf_path = generate_report(scan, meta, out_dir=out_dir)
+        with open(pdf_path, "rb") as fh:
+            report_b64 = _b64.b64encode(fh.read()).decode("ascii")
+        report_name = os.path.basename(pdf_path)
+        try:
+            os.remove(pdf_path)
+        except OSError:
+            pass
+    except Exception as e:
+        log_event("ENGAGEMENT_ERROR", f"report generation failed: {e}", "WARNING")
+
+    log_audit_scan(scan["file_hash"],
+                   f"engagement total={len(sast) + len(sca) + len(gas)}",
+                   500.00)
+
+    return {
+        "status": "success",
+        "tier": "Engagement: Proof-Led Remediation ($500 USDC)",
+        "agent": AGENT_ADDRESS,
+        "file_hash": scan["file_hash"],
+        "risk_findings": {"sast": len(sast), "sca": len(sca), "gas": len(gas),
+                          "total": len(sast) + len(sca) + len(gas)},
+        "llm_analysis": (audit or {}).get("llm_analysis"),
+        "patched_code": rem.get("patched_code"),
+        "changes_made": rem.get("changes_made", []),
+        "security_notes": rem.get("security_notes", []),
+        "report_filename": report_name,
+        "report_pdf_base64": report_b64,
+        "monitoring_offer": {
+            "price": os.getenv("PRICE_RETAINER", "$495/mo"),
+            "stripe_link": os.getenv("STRIPE_LINK_RETAINER", ""),
+        },
+        "model": scan["model"],
+    }
+
+
+@app.post(
+    "/v1/engagement/remediation",
+    tags=["Engagements"],
+    summary="Proof-Led Remediation Engagement ($500 USDC)",
+    description="Full paid engagement deliverable: exhaustive audit, patched code, and a client PDF security report (base64) for investors/auditors. Includes a monitoring-retainer offer."
+)
+@pay("$500")
+async def engagement_remediation(request: Request):
+    """$500 one-time engagement: deep audit + patch + client PDF report."""
+    if is_kill_switch_active():
+        raise HTTPException(status_code=503, detail="Agent offline: kill switch active.")
+
+    data = await request.json()
+    code = data.get("code")
+    if not isinstance(code, str) or len(code.strip()) < 40:
+        raise HTTPException(status_code=400, detail="Missing or too-short 'code' parameter.")
+    meta_in = data.get("meta") or {}
+    meta = {
+        "client": str(meta_in.get("client", "client"))[:80],
+        "repo_url": str(meta_in.get("repo_url", ""))[:200],
+        "engagement": str(meta_in.get("engagement", "Proof-Led Remediation (one-time)"))[:120],
+        "contact": str(meta_in.get("contact", ""))[:120],
+    }
+
+    log_api_call("/v1/engagement/remediation", "POST", 200,
+                 request.client.host if request.client else None)
+
+    return await _run_engagement(code, meta)
+
 # ==================== ENTERPRISE DISCOVERY ENDPOINTS ====================
 @app.get(
     "/openapi.json",
@@ -425,7 +560,8 @@ async def get_openapi_spec():
         "tiers": [
             {"name": "Quick Scan", "endpoint": "/v1/audit/quick-scan", "price": "$0.01", "model": "llama-3.1-8b-instant"},
             {"name": "Deep Audit", "endpoint": "/v1/audit/deep-repo", "price": "$0.50", "model": "llama-3.3-70b-versatile"},
-            {"name": "Remediation", "endpoint": "/v1/audit/remediate", "price": "$5.00", "model": "llama-3.3-70b-versatile"}
+            {"name": "Remediation", "endpoint": "/v1/audit/remediate", "price": "$5.00", "model": "llama-3.3-70b-versatile"},
+            {"name": "Engagement Remediation", "endpoint": "/v1/engagement/remediation", "price": "$500.00", "model": "qwen/qwen3.8-27b"}
         ]
     }
     spec["info"]["x-payment-protocol"] = "x402"
@@ -503,6 +639,31 @@ async def get_mcp_manifest():
                     },
                     "required": ["code"]
                 }
+            },
+            {
+                "name": "engagement_remediation",
+                "description": "Proof-led remediation engagement: exhaustive audit, patched code, and a client PDF security report (base64).",
+                "endpoint": "/v1/engagement/remediation",
+                "method": "POST",
+                "cost": "$500.00 USDC",
+                "model": "qwen/qwen3.8-27b",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "code": {"type": "string", "description": "Repository source code for the engagement"},
+                        "meta": {
+                            "type": "object",
+                            "description": "Client metadata: client, repo_url, engagement, contact",
+                            "properties": {
+                                "client": {"type": "string"},
+                                "repo_url": {"type": "string"},
+                                "engagement": {"type": "string"},
+                                "contact": {"type": "string"},
+                            },
+                        },
+                    },
+                    "required": ["code"]
+                }
             }
         ],
         "pricing_summary": {
@@ -511,7 +672,8 @@ async def get_mcp_manifest():
             "tiers": [
                 {"name": "quick_scan", "cost": "$0.01"},
                 {"name": "deep_audit", "cost": "$0.50"},
-                {"name": "remediate_code", "cost": "$5.00"}
+                {"name": "remediate_code", "cost": "$5.00"},
+                {"name": "engagement_remediation", "cost": "$500.00"}
             ]
         }
     }
@@ -534,7 +696,8 @@ async def health_check():
         "service_tiers": [
             {"name": "Quick Scan", "endpoint": "/v1/audit/quick-scan", "price": "$0.01"},
             {"name": "Deep Audit", "endpoint": "/v1/audit/deep-repo", "price": "$0.50"},
-            {"name": "Remediation", "endpoint": "/v1/audit/remediate", "price": "$5.00"}
+            {"name": "Remediation", "endpoint": "/v1/audit/remediate", "price": "$5.00"},
+            {"name": "Engagement Remediation", "endpoint": "/v1/engagement/remediation", "price": "$500"}
         ]
     }
 
