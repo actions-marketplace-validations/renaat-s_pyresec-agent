@@ -168,6 +168,36 @@ def _get_landing_html():
 async def custom_docs():
     return HTMLResponse(content=_get_landing_html())
 
+@app.get("/", include_in_schema=False)
+async def root_landing():
+    return HTMLResponse(content=_get_landing_html())
+
+# ==================== HIGH-TICKET SERVICES PAGE ====================
+_SERVICES_HTML = None
+
+def _get_services_html():
+    global _SERVICES_HTML
+    if _SERVICES_HTML is None:
+        path = os.path.join(os.path.dirname(__file__), "templates", "services.html")
+        with open(path, "r", encoding="utf-8") as f:
+            _SERVICES_HTML = f.read()
+    return _SERVICES_HTML
+
+@app.get("/services", include_in_schema=False)
+async def services_page():
+    html = _get_services_html()
+    stripe_remediation = os.getenv("STRIPE_LINK_REMEDIATION", "").strip()
+    stripe_retainer = os.getenv("STRIPE_LINK_RETAINER", "").strip()
+    html = html.replace(
+        "{{STRIPE_REMEDIATION}}",
+        stripe_remediation or
+        "mailto:pyresec@nanoclonesystems.com?subject=Proof-Led%20Remediation%20Engagement")
+    html = html.replace(
+        "{{STRIPE_RETAINER}}",
+        stripe_retainer or
+        "mailto:pyresec@nanoclonesystems.com?subject=Monitoring%20Retainer")
+    return HTMLResponse(content=html)
+
 # ==================== PRIVACY & TERMS PAGES ====================
 _PRIVACY_HTML = None
 _TERMS_HTML = None
@@ -199,7 +229,7 @@ async def terms_conditions():
 # ==================== ROBOTS.TXT ====================
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
-    content = "User-agent: *\nAllow: /health\nAllow: /docs\nAllow: /swagger\nAllow: /openapi.json\nAllow: /mcp/manifest.json\nAllow: /privacy\nAllow: /terms\nDisallow: /admin/\nDisallow: /v1/\n\nSitemap: https://pyresec.io/sitemap.xml\n"
+    content = "User-agent: *\nAllow: /health\nAllow: /docs\nAllow: /services\nAllow: /swagger\nAllow: /openapi.json\nAllow: /mcp/manifest.json\nAllow: /privacy\nAllow: /terms\nDisallow: /admin/\nDisallow: /v1/\n\nSitemap: https://pyresec.io/sitemap.xml\n"
     return PlainTextResponse(content=content, media_type="text/plain")
 
 # ==================== SITEMAP.XML ====================
@@ -209,6 +239,7 @@ async def sitemap_xml():
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://pyresec.io/docs</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://pyresec.io/services</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://pyresec.io/swagger</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://pyresec.io/health</loc><lastmod>{now}</lastmod><changefreq>daily</changefreq><priority>0.5</priority></url>
   <url><loc>https://pyresec.io/privacy</loc><lastmod>{now}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>

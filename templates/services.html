@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PYRESEC — Security Engagements | Proof-Led Remediation &amp; Monitoring</title>
+<meta name="description" content="High-ticket PYRESEC security engagements: proof-led remediation ($750 one-time) and continuous monitoring ($495/mo). Free baseline scan first — you see the evidence before you pay.">
+<meta name="keywords" content="security audit, code remediation, continuous monitoring, security retainer, proof-led security, PDF security report">
+<meta name="author" content="NanoClone Life Sciences Ltd.">
+<link rel="canonical" href="https://pyresec.io/services">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pyresec.io/services">
+<meta property="og:title" content="PYRESEC — Security Engagements">
+<meta property="og:description" content="Proof-led remediation ($750) and continuous monitoring ($495/mo). Free baseline scan first — evidence before payment.">
+<meta property="og:image" content="https://pyresec.io/social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://pyresec.io/services">
+<meta name="twitter:title" content="PYRESEC — Security Engagements">
+<meta name="twitter:description" content="Proof-led remediation ($750) and continuous monitoring ($495/mo). Free baseline scan first — evidence before payment.">
+<meta name="twitter:image" content="https://pyresec.io/social-preview.png">
+
+<!-- Favicon (inline SVG) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='20' fill='%23050505'/%3E%3Ctext x='60' y='50' text-anchor='middle' fill='%23dc2626' font-family='monospace' font-size='14' font-weight='bold'%3EPYRESEC%3C/text%3E%3Ctext x='60' y='70' text-anchor='middle' fill='%23666' font-family='monospace' font-size='8'%3EAI AGENT%3C/text%3E%3Ccircle cx='60' cy='35' r='6' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3Cpath d='M40 85 L60 75 L80 85' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3C/svg%3E">
+
+<!-- Plausible Analytics (privacy-friendly, no cookies) -->
+<script defer data-domain="pyresec.io" src="https://plausible.io/js/script.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  --base-950: #050505;
+  --base-900: #0a0a0a;
+  --base-800: #121212;
+  --brand-red: #dc2626;
+  --brand-red-glow: rgba(220, 38, 38, 0.15);
+  --brand-crimson: #991b1b;
+  --glass-high: rgba(255, 255, 255, 0.02);
+  --glass-blur: blur(24px) saturate(180%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.06);
+  --font-main: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Inter Tight", monospace;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-main);
+  background: var(--base-950);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(220, 38, 38, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(153, 27, 27, 0.06) 0px, transparent 50%);
+}
+
+.noise-overlay {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+.orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
+.orb-red { width: 60vw; height: 60vw; top: -20%; left: -15%; background: radial-gradient(circle, rgba(220,38,38,0.12) 0%, rgba(220,38,38,0.03) 40%, transparent 70%); }
+.orb-crimson { width: 50vw; height: 50vw; bottom: -15%; right: -10%; background: radial-gradient(circle, rgba(153,27,27,0.1) 0%, rgba(153,27,27,0.02) 40%, transparent 70%); }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 2; }
+
+/* HEADER */
+.header {
+  position: fixed; top: 1.5rem; left: 0; width: 100%; z-index: 1000;
+  display: flex; justify-content: center; padding: 0 2rem; pointer-events: none;
+}
+.header-inner {
+  width: 100%; max-width: 1200px; min-height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; border-radius: 100px;
+  background: linear-gradient(135deg, rgba(220,38,38,0.15), rgba(10,10,10,0.85), rgba(153,27,27,0.1));
+  backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+  pointer-events: auto;
+}
+.header-brand { display: flex; align-items: center; gap: 1rem; }
+.header-brand span { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--text-muted); }
+.header-right { display: flex; gap: 1.5rem; align-items: center; }
+.header-links { display: flex; gap: 1.5rem; align-items: center; }
+.header-links a {
+  font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);
+  text-decoration: none; transition: color 0.3s;
+}
+.header-links a:hover { color: #fff; }
+.header-links .btn-try {
+  color: var(--brand-red) !important; font-weight: 700 !important;
+  padding: 0.5rem 1.2rem; border: 1px solid var(--brand-red);
+  border-radius: 100px; background: rgba(220,38,38,0.05);
+  transition: all 0.3s;
+}
+.header-links .btn-try:hover { background: var(--brand-red); color: #000 !important; box-shadow: 0 0 20px rgba(220,38,38,0.3); }
+
+/* SERVICE SWITCH (Self-Serve <-> Engagements) */
+.service-toggle {
+  display: flex; padding: 4px; border-radius: 100px; gap: 2px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+}
+.service-toggle a {
+  font-size: 0.78rem; font-weight: 600; padding: 0.45rem 1.1rem;
+  border-radius: 100px; color: var(--text-secondary);
+  text-decoration: none; transition: all 0.3s; white-space: nowrap;
+}
+.service-toggle a:hover:not(.active) { color: #fff; background: rgba(255,255,255,0.05); }
+.service-toggle a.active {
+  background: var(--brand-red); color: #000;
+  box-shadow: 0 0 16px rgba(220,38,38,0.35);
+}
+
+/* HERO */
+.hero { padding: 10rem 0 4rem; text-align: center; }
+.hero-content { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+.hero-badge {
+  font-size: 0.7rem; font-weight: 700; padding: 0.4rem 1rem;
+  border-radius: 100px; background: var(--base-900);
+  border: var(--glass-border); color: var(--brand-red);
+  letter-spacing: 0.15em; text-transform: uppercase;
+}
+.hero h1 {
+  font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; line-height: 1.1;
+  background: linear-gradient(135deg, #fff 0%, #dc2626 50%, #991b1b 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-sub {
+  font-size: 1.15rem; color: var(--text-secondary); font-family: var(--font-mono);
+  max-width: 680px; line-height: 1.6;
+}
+.hero-stats { display: flex; gap: 3rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center; }
+.stat { text-align: center; }
+.stat-val { font-size: 2rem; font-weight: 700; color: var(--brand-red); font-family: var(--font-mono); }
+.stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.25rem; }
+
+/* GLASS CARD */
+.glass-card {
+  border-radius: 32px; background: var(--glass-high);
+  backdrop-filter: var(--glass-blur); border: var(--glass-border);
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.02);
+  overflow: hidden; position: relative;
+}
+.glass-card::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.02; mix-blend-mode: overlay; pointer-events: none; border-radius: inherit;
+}
+
+.section-header { text-align: center; margin-bottom: 3rem; }
+.section-header h2 {
+  font-size: clamp(2rem, 4vw, 3rem); font-weight: 700;
+  background: linear-gradient(135deg, #fff, #dc2626);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.section-header p { color: var(--text-secondary); margin-top: 1rem; font-size: 1.1rem; }
+
+/* HT SERVICE TOGGLE (radio-driven, zero JS) */
+.ht-radio { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.ht-switch {
+  display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2.5rem;
+  padding: 6px; border-radius: 100px; width: fit-content;
+  margin-left: auto; margin-right: auto;
+  background: var(--base-900); border: var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+}
+.ht-opt {
+  font-size: 0.95rem; font-weight: 600; padding: 0.7rem 1.8rem;
+  border-radius: 100px; color: var(--text-secondary); cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2,0.8,0.2,1); user-select: none;
+}
+.ht-opt:hover { color: #fff; }
+#ht-rem:checked ~ .ht-switch label[for="ht-rem"],
+#ht-mon:checked ~ .ht-switch label[for="ht-mon"] {
+  background: var(--brand-red); color: #000;
+  box-shadow: 0 0 20px rgba(220,38,38,0.4);
+}
+.ht-panel { display: none; }
+#ht-rem:checked ~ .ht-panels .panel-rem { display: block; }
+#ht-mon:checked ~ .ht-panels .panel-mon { display: block; }
+
+/* HT PANEL CONTENT */
+.ht-card { padding: 3rem; }
+.ht-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 3rem; align-items: start; }
+.ht-kicker {
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--brand-red);
+  letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem;
+}
+.ht-name { font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 1rem; }
+.ht-price-row { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.ht-price { font-size: 3rem; font-weight: 700; color: var(--brand-red); font-family: var(--font-mono); line-height: 1; }
+.ht-chip {
+  font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.9rem;
+  border-radius: 100px; background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.25); color: var(--brand-red); white-space: nowrap;
+}
+.ht-desc { color: var(--text-secondary); font-size: 1rem; line-height: 1.7; margin-bottom: 1.75rem; }
+.ht-features { list-style: none; display: flex; flex-direction: column; gap: 0.85rem; }
+.ht-features li { color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: flex-start; gap: 0.6rem; line-height: 1.5; }
+.ht-features li::before { content: "\2192"; color: var(--brand-red); font-weight: 700; flex-shrink: 0; }
+.ht-cta-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
+.btn-pay {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.85rem 2rem; border-radius: 100px; font-weight: 700; font-size: 0.95rem;
+  text-decoration: none; transition: all 0.3s;
+}
+.btn-pay-primary { background: var(--brand-red); color: #000; border: 1px solid var(--brand-red); }
+.btn-pay-primary:hover { box-shadow: 0 0 30px rgba(220,38,38,0.4); transform: translateY(-2px); }
+.btn-pay-ghost { background: rgba(220,38,38,0.05); color: var(--brand-red); border: 1px solid rgba(220,38,38,0.35); }
+.btn-pay-ghost:hover { background: rgba(220,38,38,0.15); transform: translateY(-2px); }
+.ht-note { color: var(--text-muted); font-size: 0.8rem; font-family: var(--font-mono); margin-top: 1.25rem; line-height: 1.6; }
+.tier-endpoint {
+  font-family: var(--font-mono); font-size: 0.8rem; padding: 0.75rem 1rem;
+  border-radius: 12px; background: rgba(220,38,38,0.05);
+  border: 1px solid rgba(220,38,38,0.1); color: var(--brand-red);
+  word-break: break-all; margin-top: 1.5rem;
+}
+
+/* HOW IT WORKS */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+.step-card { padding: 2rem; border-radius: 24px; background: var(--base-900); border: var(--glass-border); transition: all 0.4s cubic-bezier(0.2,0.8,0.2,1); }
+.step-card:hover { transform: translateY(-6px); background: rgba(255,255,255,0.03); box-shadow: 0 20px 60px -15px rgba(220,38,38,0.1); }
+.step-num {
+  font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; color: var(--brand-red);
+  border: 1px solid rgba(220,38,38,0.3); border-radius: 100px;
+  width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.25rem; background: rgba(220,38,38,0.06);
+}
+.step-title { font-size: 1.05rem; font-weight: 600; color: #fff; margin-bottom: 0.6rem; }
+.step-desc { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; }
+
+/* SELF-SERVE BANNER */
+.selfserve-card {
+  padding: 2.5rem 3rem; display: flex; align-items: center; justify-content: space-between;
+  gap: 2rem; flex-wrap: wrap;
+}
+.selfserve-card h3 { font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+.selfserve-card p { color: var(--text-secondary); font-size: 0.95rem; }
+.selfserve-tiers { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.tier-pill {
+  font-family: var(--font-mono); font-size: 0.8rem; padding: 0.5rem 1rem;
+  border-radius: 100px; background: var(--base-950); border: var(--glass-border);
+  color: var(--text-secondary);
+}
+.tier-pill b { color: var(--brand-red); }
+.swagger-link {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.8rem 2rem; border-radius: 100px;
+  background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2);
+  color: var(--brand-red); font-weight: 600; font-size: 0.9rem;
+  text-decoration: none; transition: all 0.3s; white-space: nowrap;
+}
+.swagger-link:hover { background: var(--brand-red); color: #000; box-shadow: 0 0 30px rgba(220,38,38,0.3); }
+
+section { position: relative; z-index: 2; }
+.pad { padding: 5rem 0; }
+
+/* FOOTER */
+.footer {
+  padding: 4rem 2rem 2rem; border-top: var(--glass-border);
+  text-align: center; margin-top: 4rem;
+}
+.footer-brand img { height: 50px; filter: drop-shadow(0 0 15px rgba(220,38,38,0.3)); transition: filter 0.3s ease; }
+.footer-brand img:hover { filter: drop-shadow(0 0 25px rgba(220,38,38,0.5)) drop-shadow(0 0 50px rgba(220,38,38,0.2)); }
+.footer-sub { color: var(--text-muted); font-size: 0.8rem; font-family: var(--font-mono); }
+.footer-links { display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap; }
+.footer-links a { color: var(--text-muted); font-size: 0.85rem; text-decoration: none; transition: color 0.3s; }
+.footer-links a:hover { color: var(--brand-red); }
+
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; animation: pulse 2s infinite; margin-right: 0.5rem; }
+
+@media (max-width: 900px) {
+  .ht-grid { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: repeat(2, 1fr); }
+  .header-links { display: none; }
+}
+@media (max-width: 560px) {
+  .steps { grid-template-columns: 1fr; }
+  .ht-switch { flex-direction: column; width: 90%; border-radius: 24px; }
+  .ht-opt { text-align: center; border-radius: 18px; }
+  .hero-stats { gap: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="noise-overlay"></div>
+<div class="orb orb-red"></div>
+<div class="orb orb-crimson"></div>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <span style="color:#dc2626;">PYRESEC</span>
+      <span>A NANOCLONE SYSTEMS SERVICE</span>
+    </div>
+    <div class="header-right">
+      <div class="service-toggle">
+        <a href="/docs">Self-Serve</a>
+        <a href="/services" class="active">Engagements</a>
+      </div>
+      <div class="header-links">
+        <a href="/health">Status</a>
+        <a href="/swagger" class="btn-try">Swagger UI</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge"><span class="live-dot"></span> MANAGED SECURITY ENGAGEMENTS</div>
+    <h1>Proof-Led Security<br>Engagements</h1>
+    <p class="hero-sub">Disclosure is free. You see the evidence before you pay — then choose a one-time remediation or hands-off continuous monitoring.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-val">Free</div><div class="stat-label">Baseline Scan</div></div>
+      <div class="stat"><div class="stat-val">$750</div><div class="stat-label">Remediation (one-time)</div></div>
+      <div class="stat"><div class="stat-val">$495/mo</div><div class="stat-label">Monitoring Retainer</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="pad">
+  <div class="container">
+    <div class="section-header">
+      <h2>Choose Your Service</h2>
+      <p>Toggle between the two engagements — both start with a free proof of real findings in your code.</p>
+    </div>
+
+    <input type="radio" name="ht" id="ht-rem" class="ht-radio" checked>
+    <input type="radio" name="ht" id="ht-mon" class="ht-radio">
+
+    <div class="ht-switch">
+      <label for="ht-rem" class="ht-opt">Proof-Led Remediation</label>
+      <label for="ht-mon" class="ht-opt">Continuous Monitoring</label>
+    </div>
+
+    <div class="ht-panels">
+      <!-- ===== PANEL: REMEDIATION ===== -->
+      <div class="ht-panel panel-rem">
+        <div class="ht-card glass-card">
+          <div class="ht-grid">
+            <div>
+              <div class="ht-kicker">One-Time Engagement</div>
+              <div class="ht-name">Proof-Led Remediation</div>
+              <div class="ht-price-row">
+                <div class="ht-price">$750</div>
+                <div class="ht-chip">or $500 USDC direct via x402</div>
+              </div>
+              <p class="ht-desc">
+                We start with evidence, not a pitch. A free baseline scan of your repository
+                comes first — findings, line references, severity. If they matter, the full
+                engagement runs: exhaustive audit, complete patch, and a signed PDF report
+                your team, investors, and auditors can verify against a SHA fingerprint.
+              </p>
+              <div class="ht-cta-row">
+                <a href="{{STRIPE_REMEDIATION}}" class="btn-pay btn-pay-primary">Pay by Card — $750</a>
+                <a href="/swagger" class="btn-pay btn-pay-ghost">Pay $500 USDC — x402</a>
+              </div>
+              <div class="ht-note">
+                Card payments are processed by Stripe. USDC payments settle on Base mainnet
+                through the x402 protocol — no account, no invoice.
+              </div>
+              <div class="tier-endpoint">POST /v1/engagement/remediation &nbsp;&rarr;&nbsp; $500 USDC</div>
+            </div>
+            <div>
+              <ul class="ht-features">
+                <li>Free baseline scan first — proof before any payment</li>
+                <li>Exhaustive SAST + dependency + gas analysis with LLM deep audit</li>
+                <li>Line-referenced findings with CWE IDs and evidence excerpts</li>
+                <li>Complete patched source with change log and security notes</li>
+                <li>Client PDF report with reference ID and hash verification block</li>
+                <li>Investor- and auditor-ready deliverable from NanoClone Systems Ltd.</li>
+                <li>Monitoring retainer offered at delivery — no obligation</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PANEL: MONITORING ===== -->
+      <div class="ht-panel panel-mon">
+        <div class="ht-card glass-card">
+          <div class="ht-grid">
+            <div>
+              <div class="ht-kicker">Recurring Retainer</div>
+              <div class="ht-name">Continuous Monitoring</div>
+              <div class="ht-price-row">
+                <div class="ht-price">$495<span style="font-size:1.2rem;">/mo</span></div>
+                <div class="ht-chip">cancel anytime</div>
+              </div>
+              <p class="ht-desc">
+                Code changes daily — what was clean today can regress after the next merge.
+                We watch your repository on a schedule, diff every change against the last
+                baseline, and alert you the moment a new finding appears. Monthly PDF
+                baselines included for your team and investors.
+              </p>
+              <div class="ht-cta-row">
+                <a href="{{STRIPE_RETAINER}}" class="btn-pay btn-pay-primary">Start Monitoring — $495/mo</a>
+                <a href="/docs" class="btn-pay btn-pay-ghost">Run a Free Baseline First</a>
+              </div>
+              <div class="ht-note">
+                Recurring billing via Stripe. Every month starts from your latest baseline —
+                you only get alerted on what actually changed.
+              </div>
+            </div>
+            <div>
+              <ul class="ht-features">
+                <li>Weekly re-scan of the default branch — diff-aware</li>
+                <li>Dependency CVE watch across your lockfiles</li>
+                <li>Regression alerts the moment new findings appear</li>
+                <li>Monthly PDF baseline report for team and investors</li>
+                <li>Triage included — actionable findings only, no scanner noise</li>
+                <li>Escalation to a same-day remediation quote when something breaks</li>
+                <li>Cancel anytime — no platform lock-in, reports stay yours</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" style="padding-top: 1rem;">
+  <div class="container">
+    <div class="section-header">
+      <h2>How Proof-Led Works</h2>
+      <p>No sales call. No retainer to see findings. Evidence first, always.</p>
+    </div>
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-title">Free Baseline</div>
+        <div class="step-desc">We scan your public repository with the same engine that powers the self-serve tiers. The proof summary is yours to keep.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-title">You Review</div>
+        <div class="step-desc">Findings, scope, and price arrive together — before any payment. Nothing to approve, nothing to cancel.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-title">Engagement</div>
+        <div class="step-desc">Exhaustive audit runs: pattern analysis, dependency risks, gas inspection, and LLM reasoning over your actual source.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">04</div>
+        <div class="step-title">Delivery</div>
+        <div class="step-desc">Patched source plus a signed PDF report with a verification block — reproducible from the artifact fingerprint.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" style="padding-top: 0;">
+  <div class="container">
+    <div class="selfserve-card glass-card">
+      <div>
+        <h3>Just need a scan?</h3>
+        <p>The automated self-serve tiers are still here — pay per scan, no accounts.</p>
+        <div class="selfserve-tiers" style="margin-top: 1rem;">
+          <span class="tier-pill"><b>$0.01</b> Quick Scan</span>
+          <span class="tier-pill"><b>$0.50</b> Deep Audit</span>
+          <span class="tier-pill"><b>$5.00</b> Remediation</span>
+        </div>
+      </div>
+      <a href="/docs" class="swagger-link">Switch to Self-Serve &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="/static/nanoclone.png" alt="NanoClone Systems" /></div>
+  <div class="footer-sub">PYRESEC AI Agent Engine &mdash; Proof-Led Security Engagements</div>
+  <div class="footer-links">
+    <a href="/docs">Self-Serve Tiers</a>
+    <a href="/services">Engagements</a>
+    <a href="/health">Health</a>
+    <a href="/swagger">API Docs</a>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms &amp; Conditions</a>
+  </div>
+  <div class="footer-sub" style="margin-top: 2rem;">&copy; 2026 NanoClone Life Sciences Ltd. All rights reserved.</div>
+</footer>
+
+</body>
+</html>
