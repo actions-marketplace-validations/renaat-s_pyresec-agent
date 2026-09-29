@@ -732,6 +732,30 @@ async def health_check():
         ]
     }
 
+# ==================== STRIPE WEBHOOK → REVENUE LEDGER ====================
+import stripe_webhook
+
+@app.post("/v1/webhooks/stripe", include_in_schema=False)
+async def stripe_webhook_endpoint(request: Request):
+    """Stripe payment confirmations -> revenue ledger (closed_won, idempotent).
+
+    Configure in Stripe: Developers -> Webhooks ->
+      {PRODUCTION_URL}/v1/webhooks/stripe
+      events: checkout.session.completed, invoice.paid
+    Requires env STRIPE_WEBHOOK_SECRET (whsec_...) on this instance.
+    """
+    secret = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
+    if not secret:
+        return JSONResponse({"detail": "STRIPE_WEBHOOK_SECRET not configured"},
+                            status_code=503)
+    body = await request.body()
+    sig = request.headers.get("stripe-signature", "")
+    try:
+        result = stripe_webhook.handle_raw(body, sig, secret)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return JSONResponse(result)
+
 # ==================== ADMIN ENDPOINTS (protected) ====================
 ADMIN_KEY = os.getenv("ADMIN_KEY", "changeme")
 

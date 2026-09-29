@@ -636,7 +636,8 @@ def handle_telegram_updates(updates: list[dict], verbose: bool = True) -> int:
             for item in emails:
                 try:
                     ok = git_scraper.send_email(
-                        item["to"], item["subject"], item["body"])
+                        item["to"], item["subject"], item["body"],
+                        item.get("html"))
                 except Exception as e:
                     ok = False
                     failures.append(f"{item.get('repo', '?')} ({e})")
