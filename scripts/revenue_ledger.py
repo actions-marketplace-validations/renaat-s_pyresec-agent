@@ -19,26 +19,36 @@ import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 
-LEDGER_FILE = Path(__file__).resolve().parent / ".revenue_ledger.json"
 MODELS = ("remediation", "monitoring", "microscan")  # microscan = legacy cents tiers
 STAGES = ("proof_sent", "proposal", "closed_won", "closed_lost")
 
 
+def _ledger_path() -> Path:
+    """REVENUE_LEDGER_FILE overrides location (containers / test harnesses)."""
+    env = os.getenv("REVENUE_LEDGER_FILE", "").strip()
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parent / ".revenue_ledger.json"
+
+
 def _load() -> dict:
-    if LEDGER_FILE.exists():
+    path = _ledger_path()
+    if path.exists():
         try:
-            return json.loads(LEDGER_FILE.read_text(encoding="utf-8-sig"))
+            return json.loads(path.read_text(encoding="utf-8-sig"))
         except json.JSONDecodeError:
             pass
     return {"events": []}
 
 
 def _save(data: dict):
-    LEDGER_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    path = _ledger_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def record(model: str, stage: str, amount: float = 0.0, lead: str = "",
-           channel: str = "email", note: str = "") -> dict:
+           channel: str = "email", note: str = "", ref: str = "") -> dict:
     if model not in MODELS:
         raise ValueError(f"model must be one of {MODELS}")
     if stage not in STAGES:
@@ -52,6 +62,37 @@ def record(model: str, stage: str, amount: float = 0.0, lead: str = "",
         "lead": lead,
         "channel": channel,
         "note": note,
+        "ref": ref,
+    }
+    data["events"].append(event)
+    _save(data)
+    return event
+
+
+def mark_won(model: str, amount: float, ref: str, lead: str = "",
+             channel: str = "stripe", note: str = "") -> dict | None:
+    """Webhook entry point: record closed_won for a payment reference.
+
+    Idempotent — Stripe retries deliveries, so a ref that already has a
+    closed_won event is a no-op (returns None). Each unique payment
+    (checkout session / invoice id / scan_id) counts exactly once.
+    """
+    if model not in MODELS:
+        raise ValueError(f"model must be one of {MODELS}")
+    data = _load()
+    if ref:
+        for ev in data["events"]:
+            if ev.get("stage") == "closed_won" and ev.get("ref") == ref:
+                return None
+    event = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "model": model,
+        "stage": "closed_won",
+        "amount": float(amount),
+        "lead": lead,
+        "channel": channel,
+        "note": note,
+        "ref": ref,
     }
     data["events"].append(event)
     _save(data)

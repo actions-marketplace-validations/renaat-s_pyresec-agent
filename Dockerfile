@@ -16,7 +16,9 @@ COPY wallet_interface.py .
 COPY audit_logger.py .
 COPY population_controller.py .
 COPY payment_logger.py .
+COPY stripe_webhook.py .
 COPY scripts/report_generator.py scripts/report_generator.py
+COPY scripts/revenue_ledger.py scripts/revenue_ledger.py
 COPY static/ static/
 COPY templates/ templates/
 
