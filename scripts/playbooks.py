@@ -35,7 +35,7 @@ BASE_URL = os.getenv("PYRESEC_URL",
                      "https://pyresec-agent-519576377065.us-central1.run.app")
 SERVICES_URL = f"{BASE_URL}/services"
 
-ICP_MIN_SCORE = int(os.getenv("ICP_MIN_SCORE", "45"))
+ICP_MIN_SCORE = int(os.getenv("ICP_MIN_SCORE", "65"))
 
 # ==================== ICP SCORING ====================
 
@@ -47,6 +47,17 @@ ICP_TOPICS = {
 ICP_DESC_WORDS = (
     "protocol", "production", "mainnet", "testnet", "api", "platform",
     "infrastructure", "settlement", "custody", "exchange",
+)
+
+# Security-budget signals: teams that already spend on audits/tooling
+SECURITY_SIGNAL_WORDS = (
+    "audit", "audited", "security", "slither", "mythril", "semgrep",
+    "immunefi", "code4rena", "codehawks", "spearbit",
+)
+AUDIT_FIRM_WORDS = (
+    "trail of bits", "openzeppelin", "consensys diligence", "consensys",
+    "spearbit", "immunefi", "code4rena", "codehawks", "certik",
+    "hacken", "slowmist", "chainsecurity", "least authority", "ottersec",
 )
 
 
@@ -75,6 +86,12 @@ def score_repo(repo: dict) -> int:
     if any(w in desc for w in ICP_DESC_WORDS):
         score += 10
 
+    # Teams already investing in security are far more likely to buy high-ticket
+    if any(w in desc for w in SECURITY_SIGNAL_WORDS):
+        score += 12
+    if any(w in desc for w in AUDIT_FIRM_WORDS):
+        score += 18
+
     pushed = repo.get("pushed_at") or ""
     if pushed >= "2026-09":  # active within ~2 weeks of 2026-09-28
         score += 10
@@ -89,6 +106,13 @@ def score_repo(repo: dict) -> int:
 
 def qualifies(repo: dict) -> bool:
     return score_repo(repo) >= ICP_MIN_SCORE
+
+
+def has_security_signals(repo: dict) -> bool:
+    """Quick boolean check for explicit security/audit budget signals."""
+    desc = (repo.get("description") or "").lower()
+    return (any(w in desc for w in SECURITY_SIGNAL_WORDS) or
+            any(w in desc for w in AUDIT_FIRM_WORDS))
 
 
 # ==================== PROOF FORMATTING ====================

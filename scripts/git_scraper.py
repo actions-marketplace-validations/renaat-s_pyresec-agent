@@ -160,6 +160,56 @@ def get_commit_author(repo_full_name: str, since: str) -> Optional[dict]:
         }
 
 
+def _clean_domain(raw: str) -> str:
+    """Strip protocol/path/www from a URL to get a clean apex-style domain."""
+    domain = raw.replace("https://", "").replace("http://", "").split("/")[0].lower()
+    if domain.startswith("www."):
+        domain = domain[4:]
+    return domain
+
+
+def get_org_contact(repo: dict) -> Optional[dict]:
+    """Find the best high-ticket contact for an organization-owned repo.
+
+    Priority:
+      1. Public email on the GitHub organization profile.
+      2. security@<domain> derived from the org's website/blog.
+      3. security@<domain> derived from the repo homepage.
+    """
+    org = repo.get("owner", {}) or {}
+    org_login = org.get("login", "")
+    if not org_login:
+        return None
+
+    org_email = ""
+    org_name = org_login
+    try:
+        url = f"https://api.github.com/orgs/{org_login}"
+        with httpx.Client(timeout=20.0) as client:
+            resp = client.get(url, headers=github_headers())
+            if resp.status_code == 200:
+                data = resp.json()
+                org_email = (data.get("email") or "").strip()
+                org_name = data.get("name") or org_login
+                blog = (data.get("blog") or "").strip()
+                if org_email:
+                    return {"name": org_name, "email": org_email, "source": "org_profile"}
+                if blog:
+                    domain = _clean_domain(blog)
+                    if domain and "." in domain:
+                        return {"name": org_name, "email": f"security@{domain}", "source": "derived"}
+    except Exception:
+        pass
+
+    homepage = (repo.get("homepage") or "").strip()
+    if homepage:
+        domain = _clean_domain(homepage)
+        if domain and "." in domain:
+            return {"name": org_name, "email": f"security@{domain}", "source": "derived"}
+
+    return None
+
+
 def load_seen_repos() -> set:
     """Load previously contacted repos to avoid duplicates."""
     if os.path.exists(SEEN_REPOS_FILE):
@@ -302,26 +352,48 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
                 skipped += 1
                 continue
 
-            # Get commit author email
             print(f"  Checking {full_name}...")
-            since = (datetime.now(timezone.utc) - timedelta(days=3)).strftime("%Y-%m-%dT00:00:00Z")
-            author = get_commit_author(full_name, since)
-            time.sleep(GITHUB_API_DELAY)
 
-            if not author:
-                print(f"    [SKIP] No public author email found")
+            # --- High-ticket filters: enterprise buyers only ---
+            owner_type = repo.get("owner", {}).get("type", "")
+            if owner_type != "Organization":
+                print(f"    [SKIP] owner type '{owner_type}' — not an organization")
                 seen.add(full_name)
+                skipped += 1
                 continue
-
-            email = author["email"]
-            name = author["name"]
-            print(f"    Author: {name} <{email}>")
+            if repo.get("fork"):
+                print(f"    [SKIP] fork")
+                seen.add(full_name)
+                skipped += 1
+                continue
+            if repo.get("archived"):
+                print(f"    [SKIP] archived")
+                seen.add(full_name)
+                skipped += 1
+                continue
 
             # --- ICP qualification (funded-team heuristic) ---
             score = playbooks.score_repo(repo)
             if score < playbooks.ICP_MIN_SCORE:
                 print(f"    [ICP] score {score} below {playbooks.ICP_MIN_SCORE} - not a target")
+                seen.add(full_name)
+                skipped += 1
                 continue
+
+            # Find the organization's security contact (no individual dev emails)
+            contact = get_org_contact(repo)
+            time.sleep(GITHUB_API_DELAY)
+
+            if not contact:
+                print(f"    [SKIP] No organization contact found")
+                seen.add(full_name)
+                continue
+
+            email = contact["email"]
+            print(f"    Contact: {email} ({contact['source']})")
+
+            # Generic greeting for corporate mailboxes (security@, contact@, etc.)
+            name = "there"
 
             # --- Free proof: fetch entry file + local scan ---
             code = probe.fetch_repo_main_file(full_name)
