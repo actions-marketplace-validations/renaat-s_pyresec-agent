@@ -68,14 +68,38 @@ def _infer_model(amount_usd: float, metadata: dict) -> str:
     return "remediation" if amount_usd >= 600 else "monitoring"
 
 
+def _extract_event(event: dict):
+    """Common extraction of fields from a Stripe event."""
+    etype = event.get("type") or ""
+    obj = ((event.get("data") or {}).get("object")) or {}
+    metadata = obj.get("metadata") or {}
+
+    if etype == "invoice.paid":
+        ref = obj.get("id") or ""
+        amount = (obj.get("amount_paid") or obj.get("amount_due") or 0) / 100.0
+        currency = obj.get("currency") or ""
+        lead = metadata.get("lead") or metadata.get("repo") or ""
+    else:
+        ref = (metadata.get("scan_id")
+               or obj.get("client_reference_id")
+               or obj.get("id") or "")
+        amount = (obj.get("amount_total") or 0) / 100.0
+        currency = obj.get("currency") or ""
+        lead = metadata.get("lead") or metadata.get("repo") or ""
+
+    model = _infer_model(amount, metadata)
+    return etype, obj, metadata, ref, amount, currency, lead
+
+
 def process_event(event: dict, now: float = None) -> dict:
     """Translate one verified Stripe event into a ledger entry.
 
     Returns {"status": "recorded"|"duplicate"|"ignored", ...}.
     Idempotent: replays of the same payment ref are duplicates.
+    Notification is intentionally NOT done here — call send_notifications()
+    from a FastAPI BackgroundTask so Stripe gets a fast 200 response.
     """
-    etype = event.get("type") or ""
-    obj = ((event.get("data") or {}).get("object")) or {}
+    etype, obj, metadata, ref, amount, currency, lead = _extract_event(event)
 
     if etype not in WON_EVENTS:
         return {"status": "ignored", "type": etype}
@@ -86,19 +110,6 @@ def process_event(event: dict, now: float = None) -> dict:
         reason = obj.get("billing_reason")
         if reason not in ("subscription_cycle", "subscription_update"):
             return {"status": "ignored", "type": f"invoice.paid/{reason}"}
-        ref = obj.get("id") or ""
-        amount = (obj.get("amount_paid") or obj.get("amount_due") or 0) / 100.0
-        metadata = obj.get("metadata") or {}
-        currency = obj.get("currency") or ""
-        lead = metadata.get("lead") or metadata.get("repo") or ""
-    else:
-        metadata = obj.get("metadata") or {}
-        ref = (metadata.get("scan_id")
-               or obj.get("client_reference_id")
-               or obj.get("id") or "")
-        amount = (obj.get("amount_total") or 0) / 100.0
-        currency = obj.get("currency") or ""
-        lead = metadata.get("lead") or metadata.get("repo") or ""
 
     if amount <= 0:
         return {"status": "ignored", "type": etype, "reason": "zero amount"}
@@ -114,9 +125,17 @@ def process_event(event: dict, now: float = None) -> dict:
     if entry is None:
         return {"status": "duplicate", "ref": ref}
 
-    result = {"status": "recorded", "model": model, "amount": amount, "ref": ref}
+    return {"status": "recorded", "model": model, "amount": amount, "ref": ref}
 
-    # --- concierge notifications (only on first recorded payment, not retries) ---
+
+def send_notifications(event: dict) -> dict:
+    """Concierge follow-up: intake email + internal Telegram alert.
+
+    Runs in a FastAPI BackgroundTask so the webhook returns quickly.
+    """
+    etype, obj, metadata, ref, amount, _, _ = _extract_event(event)
+    model = _infer_model(amount, metadata)
+
     customer_email = ""
     if etype == "checkout.session.completed":
         details = obj.get("customer_details") or {}
@@ -136,7 +155,7 @@ def process_event(event: dict, now: float = None) -> dict:
         f"Event: {etype}"
     )
 
-    return result
+    return {"model": model, "amount": amount, "ref": ref, "email": customer_email}
 
 
 def handle_raw(body: bytes, sig_header: str, secret: str,
@@ -205,6 +224,10 @@ if __name__ == "__main__":
         "id": "in_2", "billing_reason": "subscription_cycle",
         "amount_paid": 49500, "currency": "usd", "metadata": {}}}}).encode()
     r4 = handle_raw(inv_cycle, _sign(inv_cycle), secret)
+
+    # Notifications run in a BackgroundTask in production; call them explicitly here.
+    send_notifications(json.loads(payload))
+    send_notifications(json.loads(inv_cycle))
 
     summary = revenue_ledger.summary()
     os.remove(os.environ["REVENUE_LEDGER_FILE"])

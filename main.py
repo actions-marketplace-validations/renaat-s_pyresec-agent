@@ -5,7 +5,7 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_x402 import init_x402, pay
@@ -736,13 +736,14 @@ async def health_check():
 import stripe_webhook
 
 @app.post("/v1/webhooks/stripe", include_in_schema=False)
-async def stripe_webhook_endpoint(request: Request):
+async def stripe_webhook_endpoint(request: Request, background_tasks: BackgroundTasks):
     """Stripe payment confirmations -> revenue ledger (closed_won, idempotent).
 
     Configure in Stripe: Developers -> Webhooks ->
       {PRODUCTION_URL}/v1/webhooks/stripe
       events: checkout.session.completed, invoice.paid
     Requires env STRIPE_WEBHOOK_SECRET (whsec_...) on this instance.
+    Notifications run in BackgroundTasks so Stripe gets a fast 200.
     """
     secret = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
     if not secret:
@@ -754,6 +755,14 @@ async def stripe_webhook_endpoint(request: Request):
         result = stripe_webhook.handle_raw(body, sig, secret)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    if result.get("status") == "recorded":
+        try:
+            event = json.loads(body)
+        except json.JSONDecodeError:
+            event = {}
+        background_tasks.add_task(stripe_webhook.send_notifications, event)
+
     return JSONResponse(result)
 
 # ==================== ADMIN ENDPOINTS (protected) ====================
