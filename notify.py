@@ -17,7 +17,11 @@ BASE_URL = os.getenv("PYRESEC_URL",
 
 
 def _branded_html(title: str, paragraphs: list[str]) -> str:
-    """PYRESEC-branded HTML email (dark glass card style)."""
+    """PYRESEC-branded HTML email (dark glass card style).
+
+    Matches the original outreach email design: PYRESEC logo header,
+    content card, NanoClone Systems logo footer.
+    """
     body = "".join(
         f'<p style="color:#ccc;font-size:15px;margin:0 0 16px;text-align:center;line-height:1.6;">{p}</p>'
         for p in paragraphs
@@ -30,6 +34,7 @@ def _branded_html(title: str, paragraphs: list[str]) -> str:
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:rgba(15,15,15,0.9);border-radius:16px;border:2px solid rgba(255,255,255,0.25);overflow:hidden;">
   <tr><td style="padding:48px 40px 40px;border-bottom:2px solid rgba(255,255,255,0.25);" align="center">
+    <img src="{BASE_URL}/static/pyresec.png" width="100" height="100" alt="PYRESEC" style="display:block;margin:0 auto 20px auto;border-radius:20px;">
     <div style="color:#fff;font-size:42px;font-weight:800;letter-spacing:6px;margin:0 0 8px 0;">PYRESEC</div>
     <div style="color:#999;font-size:17px;letter-spacing:3px;text-transform:uppercase;">AI Code Security Engine</div>
   </td></tr>
@@ -38,6 +43,7 @@ def _branded_html(title: str, paragraphs: list[str]) -> str:
     {body}
   </td></tr>
   <tr><td style="padding:40px 40px;border-top:2px solid rgba(255,255,255,0.25);" align="center">
+    <img src="{BASE_URL}/static/nanoclone.png" height="64" alt="NanoClone Systems" style="display:block;margin:0 auto 20px auto;">
     <div style="color:#888;font-size:13px;text-align:center;line-height:1.6;">
       NanoClone Systems Ltd.<br>
       A NanoClone Life Sciences company<br>
