@@ -14,6 +14,7 @@ import json
 import time
 
 from scripts import revenue_ledger
+import notify
 
 TOLERANCE_SECONDS = 300
 
@@ -112,7 +113,30 @@ def process_event(event: dict, now: float = None) -> dict:
 
     if entry is None:
         return {"status": "duplicate", "ref": ref}
-    return {"status": "recorded", "model": model, "amount": amount, "ref": ref}
+
+    result = {"status": "recorded", "model": model, "amount": amount, "ref": ref}
+
+    # --- concierge notifications (only on first recorded payment, not retries) ---
+    customer_email = ""
+    if etype == "checkout.session.completed":
+        details = obj.get("customer_details") or {}
+        customer_email = details.get("email") or obj.get("customer_email") or ""
+        if customer_email:
+            if model == "remediation":
+                notify.send_remediation_intake_email(customer_email)
+            elif model == "monitoring":
+                notify.send_monitoring_intake_email(customer_email)
+
+    emoji = "💰" if etype == "checkout.session.completed" else "🔄"
+    notify.send_telegram_alert(
+        f"{emoji} <b>STRIPE {model.upper()}</b>\n"
+        f"Amount: ${amount:.2f}\n"
+        f"Ref: <code>{ref}</code>\n"
+        f"Email: {customer_email or 'n/a'}\n"
+        f"Event: {etype}"
+    )
+
+    return result
 
 
 def handle_raw(body: bytes, sig_header: str, secret: str,
@@ -138,6 +162,7 @@ if __name__ == "__main__":
         "data": {"object": {
             "id": "cs_test_123", "amount_total": 75000, "currency": "usd",
             "client_reference_id": "scan-abc", "metadata": {},
+            "customer_details": {"email": "buyer@example.com", "name": "Test Buyer"},
         }},
     }).encode()
     ts = int(time.time())
@@ -160,19 +185,39 @@ if __name__ == "__main__":
     if os.path.exists(os.environ["REVENUE_LEDGER_FILE"]):
         os.remove(os.environ["REVENUE_LEDGER_FILE"])
 
+    # Prevent the self-test from sending real emails/Telegrams
+    sent_emails, sent_alerts = [], []
+    notify.send_remediation_intake_email = lambda x: sent_emails.append(("remediation", x)) or True
+    notify.send_monitoring_intake_email = lambda x: sent_emails.append(("monitoring", x)) or True
+    notify.send_telegram_alert = lambda x: sent_alerts.append(x) or True
+
     r1 = handle_raw(payload, header, secret)
     r2 = handle_raw(payload, header, secret)  # Stripe retry
-    summary = revenue_ledger.summary()
-    inv = json.dumps({"type": "invoice.paid", "data": {"object": {
+
+    # subscription_create invoice should be ignored (avoids double count)
+    inv_create = json.dumps({"type": "invoice.paid", "data": {"object": {
         "id": "in_1", "billing_reason": "subscription_create",
         "amount_paid": 49500, "currency": "usd"}}}).encode()
-    r3 = handle_raw(inv, _sign(inv), secret)
+    r3 = handle_raw(inv_create, _sign(inv_create), secret)
+
+    # subscription_cycle invoice is a real renewal
+    inv_cycle = json.dumps({"type": "invoice.paid", "data": {"object": {
+        "id": "in_2", "billing_reason": "subscription_cycle",
+        "amount_paid": 49500, "currency": "usd", "metadata": {}}}}).encode()
+    r4 = handle_raw(inv_cycle, _sign(inv_cycle), secret)
+
+    summary = revenue_ledger.summary()
     os.remove(os.environ["REVENUE_LEDGER_FILE"])
 
     assert r1["status"] == "recorded" and r1["model"] == "remediation"
     assert r2["status"] == "duplicate"
     assert r3["status"] == "ignored"
-    assert summary["counts_by_stage"].get("closed_won") == 1
-    assert summary["total_revenue"] == 750.0
+    assert r4["status"] == "recorded" and r4["model"] == "monitoring"
+    assert summary["counts_by_stage"].get("closed_won") == 2
+    assert summary["total_revenue"] == 1245.0
+    assert any(t == "remediation" for t, _ in sent_emails)
+    assert len(sent_alerts) == 2  # checkout + renewal, not the duplicate or create invoice
     print("SELF-TEST PASS:", r1, "| retry:", r2["status"],
-          "| create-invoice:", r3["status"], "| revenue:", summary["total_revenue"])
+          "| create-invoice:", r3["status"], "| renewal:", r4["status"],
+          "| revenue:", summary["total_revenue"],
+          "| alerts:", len(sent_alerts))

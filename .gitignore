@@ -27,4 +27,6 @@ scripts/.reply_queue.json
 scripts/.farcaster_state.json
 scripts/.telegram_chat_id
 scripts/.revenue_ledger.json
+scripts/monitor_registry.json
 reports/
+reports/monitoring_delta_*.md
