@@ -30,6 +30,8 @@ import base64 as _b64
 
 load_dotenv()
 
+BASE_URL = os.getenv("PRODUCTION_URL", "https://pyresec-agent-519576377065.us-central1.run.app").rstrip("/")
+
 # ==================== WALLET INITIALIZATION ====================
 WALLETS_FILE = "wallet_data.json"
 
@@ -121,8 +123,8 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url="/swagger",
     redoc_url=None,
-    contact={"name": "NanoClone Life Sciences Ltd.", "url": "https://pyresec.io"},
-    license_info={"name": "Proprietary", "url": "https://pyresec.io/license"},
+    contact={"name": "NanoClone Life Sciences Ltd.", "url": BASE_URL},
+    license_info={"name": "Proprietary", "url": f"{BASE_URL}/license"},
     servers=[
         {"url": "http://localhost:8000", "description": "Local Development"},
         {"url": os.getenv("PRODUCTION_URL", "https://pyresec-agent-519576377065.us-central1.run.app"), "description": "Production (Cloud Run)"}
@@ -161,7 +163,7 @@ def _get_landing_html():
     if _LANDING_HTML is None:
         landing_path = os.path.join(os.path.dirname(__file__), "templates", "landing.html")
         with open(landing_path, "r") as f:
-            _LANDING_HTML = f.read()
+            _LANDING_HTML = f.read().replace("{{BASE_URL}}", BASE_URL)
     return _LANDING_HTML
 
 @app.get("/docs", include_in_schema=False)
@@ -180,7 +182,7 @@ def _get_services_html():
     if _SERVICES_HTML is None:
         path = os.path.join(os.path.dirname(__file__), "templates", "services.html")
         with open(path, "r", encoding="utf-8") as f:
-            _SERVICES_HTML = f.read()
+            _SERVICES_HTML = f.read().replace("{{BASE_URL}}", BASE_URL)
     return _SERVICES_HTML
 
 @app.get("/services", include_in_schema=False)
@@ -207,7 +209,7 @@ def _get_privacy_html():
     if _PRIVACY_HTML is None:
         path = os.path.join(os.path.dirname(__file__), "templates", "privacy.html")
         with open(path, "r") as f:
-            _PRIVACY_HTML = f.read()
+            _PRIVACY_HTML = f.read().replace("{{BASE_URL}}", BASE_URL)
     return _PRIVACY_HTML
 
 def _get_terms_html():
@@ -215,7 +217,7 @@ def _get_terms_html():
     if _TERMS_HTML is None:
         path = os.path.join(os.path.dirname(__file__), "templates", "terms.html")
         with open(path, "r") as f:
-            _TERMS_HTML = f.read()
+            _TERMS_HTML = f.read().replace("{{BASE_URL}}", BASE_URL)
     return _TERMS_HTML
 
 @app.get("/privacy", include_in_schema=False)
@@ -229,7 +231,20 @@ async def terms_conditions():
 # ==================== ROBOTS.TXT ====================
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
-    content = "User-agent: *\nAllow: /health\nAllow: /docs\nAllow: /services\nAllow: /swagger\nAllow: /openapi.json\nAllow: /mcp/manifest.json\nAllow: /privacy\nAllow: /terms\nDisallow: /admin/\nDisallow: /v1/\n\nSitemap: https://pyresec.io/sitemap.xml\n"
+    content = f"""User-agent: *
+Allow: /health
+Allow: /docs
+Allow: /services
+Allow: /swagger
+Allow: /openapi.json
+Allow: /mcp/manifest.json
+Allow: /privacy
+Allow: /terms
+Disallow: /admin/
+Disallow: /v1/
+
+Sitemap: {BASE_URL}/sitemap.xml
+"""
     return PlainTextResponse(content=content, media_type="text/plain")
 
 # ==================== SITEMAP.XML ====================
@@ -238,12 +253,12 @@ async def sitemap_xml():
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://pyresec.io/docs</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://pyresec.io/services</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://pyresec.io/swagger</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://pyresec.io/health</loc><lastmod>{now}</lastmod><changefreq>daily</changefreq><priority>0.5</priority></url>
-  <url><loc>https://pyresec.io/privacy</loc><lastmod>{now}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://pyresec.io/terms</loc><lastmod>{now}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>{BASE_URL}/docs</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>{BASE_URL}/services</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>{BASE_URL}/swagger</loc><lastmod>{now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>{BASE_URL}/health</loc><lastmod>{now}</lastmod><changefreq>daily</changefreq><priority>0.5</priority></url>
+  <url><loc>{BASE_URL}/privacy</loc><lastmod>{now}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>{BASE_URL}/terms</loc><lastmod>{now}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
 </urlset>"""
     return PlainTextResponse(content=xml, media_type="application/xml")
 
@@ -272,13 +287,17 @@ a:hover{background:#dc2626;color:#000}
 async def security_headers_middleware(request: Request, call_next):
     response = await call_next(request)
 
-    if request.url.path not in ("/swagger", "/openapi.json"):
+    path = request.url.path
+    if path not in ("/swagger", "/openapi.json"):
         response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://plausible.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://plausible.io"
+
+    # Swagger UI loads JS/CSS from CDNs; applying a strict CSP there renders it blank.
+    if path not in ("/swagger", "/openapi.json"):
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://plausible.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://plausible.io"
 
     return response
 
