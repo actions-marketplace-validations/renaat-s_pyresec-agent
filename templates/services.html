@@ -7,23 +7,23 @@
 <meta name="description" content="High-ticket PYRESEC security engagements: proof-led remediation ($750 one-time) and continuous monitoring ($495/mo). Free baseline scan first — you see the evidence before you pay.">
 <meta name="keywords" content="security audit, code remediation, continuous monitoring, security retainer, proof-led security, PDF security report">
 <meta name="author" content="NanoClone Life Sciences Ltd.">
-<link rel="canonical" href="https://pyresec.io/services">
+<link rel="canonical" href="{{BASE_URL}}/services">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://pyresec.io/services">
+<meta property="og:url" content="{{BASE_URL}}/services">
 <meta property="og:title" content="PYRESEC — Security Engagements">
 <meta property="og:description" content="Proof-led remediation ($750) and continuous monitoring ($495/mo). Free baseline scan first — evidence before payment.">
-<meta property="og:image" content="https://pyresec.io/social-preview.png">
+<meta property="og:image" content="{{BASE_URL}}/static/social-preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:url" content="https://pyresec.io/services">
+<meta name="twitter:url" content="{{BASE_URL}}/services">
 <meta name="twitter:title" content="PYRESEC — Security Engagements">
 <meta name="twitter:description" content="Proof-led remediation ($750) and continuous monitoring ($495/mo). Free baseline scan first — evidence before payment.">
-<meta name="twitter:image" content="https://pyresec.io/social-preview.png">
+<meta name="twitter:image" content="{{BASE_URL}}/static/social-preview.png">
 
 <!-- Favicon (inline SVG) -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='20' fill='%23050505'/%3E%3Ctext x='60' y='50' text-anchor='middle' fill='%23dc2626' font-family='monospace' font-size='14' font-weight='bold'%3EPYRESEC%3C/text%3E%3Ctext x='60' y='70' text-anchor='middle' fill='%23666' font-family='monospace' font-size='8'%3EAI AGENT%3C/text%3E%3Ccircle cx='60' cy='35' r='6' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3Cpath d='M40 85 L60 75 L80 85' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3C/svg%3E">
@@ -264,6 +264,34 @@ body {
 }
 .swagger-link:hover { background: var(--brand-red); color: #000; box-shadow: 0 0 30px rgba(220,38,38,0.3); }
 
+button.btn-pay { border: none; font-family: inherit; cursor: pointer; }
+
+.x402-modal {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+  align-items: center; justify-content: center; padding: 2rem;
+}
+.x402-modal.active { display: flex; }
+.x402-modal-box {
+  max-width: 720px; width: 100%; max-height: 90vh; overflow-y: auto;
+  background: var(--base-900); border: var(--glass-border); border-radius: 24px;
+  padding: 2rem; position: relative;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7);
+}
+.x402-modal-box h3 { margin-bottom: 0.75rem; font-size: 1.3rem; }
+.x402-modal-box p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem; }
+.x402-modal-box code {
+  display: block; background: var(--base-950); border: var(--glass-border); border-radius: 12px;
+  padding: 1.25rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary);
+  overflow-x: auto; white-space: pre-wrap; margin-bottom: 1rem;
+}
+.x402-modal-close {
+  position: absolute; top: 1rem; right: 1rem; width: 2rem; height: 2rem;
+  border-radius: 50%; background: rgba(255,255,255,0.05); border: var(--glass-border);
+  color: var(--text-secondary); font-size: 1.2rem; cursor: pointer; transition: all 0.2s;
+}
+.x402-modal-close:hover { background: var(--brand-red); color: #000; }
+
 section { position: relative; z-index: 2; }
 .pad { padding: 5rem 0; }
 
@@ -368,7 +396,7 @@ section { position: relative; z-index: 2; }
               </p>
               <div class="ht-cta-row">
                 <a href="{{STRIPE_REMEDIATION}}" class="btn-pay btn-pay-primary">Pay by Card — $750</a>
-                <a href="/swagger" class="btn-pay btn-pay-ghost">Pay $500 USDC — x402</a>
+                <button type="button" class="btn-pay btn-pay-ghost" onclick="openX402Modal()">Pay $500 USDC — x402</button>
               </div>
               <div class="ht-note">
                 Card payments are processed by Stripe. USDC payments settle on Base mainnet
@@ -488,6 +516,39 @@ section { position: relative; z-index: 2; }
     </div>
   </div>
 </section>
+
+<div id="x402-modal" class="x402-modal" onclick="if(event.target===this)closeX402Modal()">
+  <div class="x402-modal-box">
+    <button class="x402-modal-close" onclick="closeX402Modal()" aria-label="Close">&times;</button>
+    <h3>Pay $500 USDC via x402</h3>
+    <p>High-ticket x402 payments are API-only — a browser link cannot sign a blockchain transaction. Use the official <a href="https://github.com/coinbase/x402" target="_blank" rel="noopener" style="color:var(--brand-red);">x402 Python client</a> or any x402-compatible wallet:</p>
+    <code>pip install x402
+
+from x402.clients import x402Client
+
+client = x402Client(wallet_key="YOUR_BASE_PRIVATE_KEY")
+result = client.post(
+    "{{BASE_URL}}/v1/engagement/remediation",
+    json={
+        "code": "<paste your contract/source code here>",
+        "meta": {
+            "client": "Your name / org",
+            "repo_url": "https://github.com/owner/repo",
+            "contact": "you@example.com"
+        }
+    }
+)
+
+print(result.json())  # audit + patch + PDF report</code>
+    <p style="font-size:0.8rem;color:var(--text-muted);">Not a developer? <a href="mailto:pyresec@nanoclonesystems.com?subject=USDC%20Remediation%20Payment" style="color:var(--brand-red);">Email us</a> and we will send a manual USDC invoice.</p>
+  </div>
+</div>
+
+<script>
+function openX402Modal() { document.getElementById('x402-modal').classList.add('active'); }
+function closeX402Modal() { document.getElementById('x402-modal').classList.remove('active'); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeX402Modal(); });
+</script>
 
 <footer class="footer">
   <div class="footer-brand"><img src="/static/nanoclone.png" alt="NanoClone Systems" /></div>
