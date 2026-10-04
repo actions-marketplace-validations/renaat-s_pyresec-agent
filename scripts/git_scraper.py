@@ -42,6 +42,7 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
 import playbooks
 import probe
 import revenue_ledger
+import telegram_app
 
 # ==================== CONFIGURATION ====================
 
@@ -88,6 +89,9 @@ SEARCH_QUERIES = [
 
 # Deduplication file
 SEEN_REPOS_FILE = "scripts/.seen_repos.json"
+
+# Audit log for daily runs (timestamp, qualified count, skip reasons, etc.)
+RUNS_LOG_FILE = "scripts/.outreach_runs.json"
 
 # Rate limiting
 GITHUB_API_DELAY = 2.0  # seconds between GitHub API calls (unauthenticated: 10/min)
@@ -225,6 +229,20 @@ def save_seen_repos(seen: set):
         json.dump({"repos": list(seen), "updated": datetime.now(timezone.utc).isoformat()}, f, indent=2)
 
 
+def log_run(summary: dict):
+    """Append a run summary to the audit log (last 100 runs kept)."""
+    runs = []
+    if os.path.exists(RUNS_LOG_FILE):
+        try:
+            with open(RUNS_LOG_FILE, "r", encoding="utf-8") as f:
+                runs = json.load(f)
+        except Exception:
+            runs = []
+    runs.append(summary)
+    with open(RUNS_LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(runs[-100:], f, indent=2, ensure_ascii=False)
+
+
 # ==================== RESEND EMAIL ====================
 
 def send_email(to_email: str, subject: str, body: str, html: str = None) -> bool:
@@ -325,16 +343,25 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
     date_threshold = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
     seen = load_seen_repos()
     contacted = 0
-    skipped = 0
+    skipped_counts = {
+        "seen": 0,
+        "user": 0,
+        "fork": 0,
+        "archived": 0,
+        "icp": 0,
+        "no_contact": 0,
+        "no_code": 0,
+    }
+    searches = 0
     batch: list[dict] = []
 
     for query_config in SEARCH_QUERIES:
         if len(batch) >= max_repos:
             break
         query = query_config["query"].format(date=date_threshold)
-        file_type = query_config["type"]
         label = query_config["label"]
         print(f"[SEARCH] {label}: {query[:60]}...")
+        searches += 1
 
         repos = search_repos(query, per_page=10)
         time.sleep(GITHUB_API_DELAY)
@@ -349,7 +376,7 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
 
             # Deduplication
             if full_name in seen:
-                skipped += 1
+                skipped_counts["seen"] += 1
                 continue
 
             print(f"  Checking {full_name}...")
@@ -359,17 +386,17 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
             if owner_type != "Organization":
                 print(f"    [SKIP] owner type '{owner_type}' — not an organization")
                 seen.add(full_name)
-                skipped += 1
+                skipped_counts["user"] += 1
                 continue
             if repo.get("fork"):
                 print(f"    [SKIP] fork")
                 seen.add(full_name)
-                skipped += 1
+                skipped_counts["fork"] += 1
                 continue
             if repo.get("archived"):
                 print(f"    [SKIP] archived")
                 seen.add(full_name)
-                skipped += 1
+                skipped_counts["archived"] += 1
                 continue
 
             # --- ICP qualification (funded-team heuristic) ---
@@ -377,7 +404,7 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
             if score < playbooks.ICP_MIN_SCORE:
                 print(f"    [ICP] score {score} below {playbooks.ICP_MIN_SCORE} - not a target")
                 seen.add(full_name)
-                skipped += 1
+                skipped_counts["icp"] += 1
                 continue
 
             # Find the organization's security contact (no individual dev emails)
@@ -387,6 +414,7 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
             if not contact:
                 print(f"    [SKIP] No organization contact found")
                 seen.add(full_name)
+                skipped_counts["no_contact"] += 1
                 continue
 
             email = contact["email"]
@@ -400,6 +428,7 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
             if not code:
                 print(f"    [PROOF] no scannable entry file - skip")
                 seen.add(full_name)
+                skipped_counts["no_code"] += 1
                 continue
 
             scan = probe.local_scan(code)
@@ -424,17 +453,56 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
 
             seen.add(full_name)
 
-    # Save dedup state
-    save_seen_repos(seen)
+    # Save dedup state (dry-run must not pollute the production dedup list)
+    if dry_run:
+        print("\n[DRY RUN] not updating seen-repos dedup file")
+    else:
+        save_seen_repos(seen)
 
     if dry_run:
         print(f"\n[DRY RUN] {len(batch)} qualified email(s) built — nothing sent")
     elif batch:
         contacted = dispatch_batch(batch, direct=direct)
 
+    skipped_total = sum(skipped_counts.values())
+    run_ts = datetime.now(timezone.utc).isoformat()
+
+    summary = {
+        "timestamp": run_ts,
+        "dry_run": dry_run,
+        "max_repos": max_repos,
+        "icp_min_score": playbooks.ICP_MIN_SCORE,
+        "searches": searches,
+        "qualified": len(batch),
+        "sent_or_queued": contacted,
+        "skipped": skipped_counts,
+        "skipped_total": skipped_total,
+        "seen_total": len(seen),
+        "batch_queued": bool(batch) and not dry_run and not os.getenv("OUTREACH_DIRECT", "").lower() in ("1", "true", "yes") and telegram_app.configured(),
+    }
+    log_run(summary)
+
+    # Always notify Telegram so leads never "silently" disappear
+    if telegram_app.configured():
+        status_emoji = "🟢" if batch else "🔵"
+        lines = [
+            f"{status_emoji} PYRESEC Outreach Run — {run_ts[:10]}",
+            f"Qualified leads: {len(batch)} | Sent/queued: {contacted}",
+            f"Skipped: {skipped_total} (seen {skipped_counts['seen']}, user {skipped_counts['user']}, ICP {skipped_counts['icp']}, no contact {skipped_counts['no_contact']}, no code {skipped_counts['no_code']})",
+            f"ICP floor: {playbooks.ICP_MIN_SCORE} | Searches run: {searches}",
+        ]
+        if batch and not dry_run:
+            lines.append("A batch was queued in Telegram for approval.")
+        elif not batch:
+            lines.append("No new qualified org leads matched today's searches.")
+        try:
+            telegram_app.notify("\n".join(lines))
+        except Exception as e:
+            print(f"  [TELEGRAM NOTIFY ERROR] {e}")
+
     print()
     print("=" * 60)
-    print(f"  Complete. Qualified: {len(batch)} | Sent/queued: {contacted} | Skipped (seen): {skipped}")
+    print(f"  Complete. Qualified: {len(batch)} | Sent/queued: {contacted} | Skipped (seen): {skipped_total}")
     print("=" * 60)
 
 
