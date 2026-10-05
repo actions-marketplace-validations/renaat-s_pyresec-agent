@@ -63,6 +63,9 @@ POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "300"))
 # Paid x402 promo scan on top of the free local proof (needs funded PROMO_WALLET_KEY)
 SPONSORED_SCANS = os.getenv("SPONSORED_SCANS", "").lower() in ("1", "true", "yes")
 
+# Pause automated ACSA social outreach while keeping the Telegram approval daemon alive.
+PAUSE_SOCIAL_OUTREACH = os.getenv("PAUSE_SOCIAL_OUTREACH", "").lower() in ("1", "true", "yes")
+
 # Keyword targets — posts/casts containing these trigger a scan
 KEYWORDS = [
     "deployed my smart contract",
@@ -825,12 +828,16 @@ def run_daemon(platforms: list[str], dry_run: bool = False):
     tg_enabled = telegram_app.configured() and not dry_run
 
     print("=" * 60)
-    print("  PYRESEC Social Scanner — Autonomous Lead Discovery")
+    if PAUSE_SOCIAL_OUTREACH:
+        print("  PYRESEC Social Scanner — Telegram approvals only (ACSA outreach paused)")
+    else:
+        print("  PYRESEC Social Scanner — Autonomous Lead Discovery")
     print("=" * 60)
     print(f"  Platforms: {', '.join(platforms)}")
     print(f"  Poll interval: {POLL_INTERVAL}s")
     print(f"  Promo budget: {SCAN_PROMO_BUDGET}/day")
     print(f"  Dry run: {dry_run}")
+    print(f"  ACSA outreach: {'PAUSED' if PAUSE_SOCIAL_OUTREACH else 'ACTIVE'}")
     print(f"  Telegram approvals: {'ON' if tg_enabled else 'OFF (dry-run or no token)'}")
     print(f"  Keywords: {len(KEYWORDS)}")
     print("=" * 60)
@@ -861,7 +868,12 @@ def run_daemon(platforms: list[str], dry_run: bool = False):
 
             # --- Social poll (every POLL_INTERVAL) ---
             now = time.time()
-            if now >= next_social:
+            if PAUSE_SOCIAL_OUTREACH:
+                if not tg_enabled:
+                    print("[PAUSED] ACSA outreach is off and Telegram is disabled — nothing to do.")
+                    time.sleep(30)
+                # Telegram approval loop above keeps running; just don't poll social.
+            elif now >= next_social:
                 print(f"\n[{datetime.now(timezone.utc).strftime('%H:%M:%S')}] Polling...")
                 replies = poll_once(platforms, dry_run=dry_run)
 
@@ -877,7 +889,7 @@ def run_daemon(platforms: list[str], dry_run: bool = False):
 
                 next_social = now + POLL_INTERVAL
 
-            if not tg_enabled:
+            if not tg_enabled and not PAUSE_SOCIAL_OUTREACH:
                 time.sleep(30)
 
         except KeyboardInterrupt:
