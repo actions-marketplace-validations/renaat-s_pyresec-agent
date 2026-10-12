@@ -16,8 +16,8 @@ PYRESEC_SENDER = os.getenv("PYRESEC_SENDER", "onboarding@resend.dev")
 PYRESEC_FROM_NAME = os.getenv("PYRESEC_FROM_NAME", "PYRESEC Agent")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
-BASE_URL = os.getenv("PYRESEC_URL",
-                     "https://pyresec-agent-519576377065.us-central1.run.app")
+BASE_URL = os.getenv("PRODUCTION_URL",
+                      "https://pyresec-agent-519576377065.us-central1.run.app")
 
 
 def _branded_html(title: str, paragraphs: list[str]) -> str:
