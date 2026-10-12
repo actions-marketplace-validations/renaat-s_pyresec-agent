@@ -148,7 +148,7 @@ NanoClone Systems Ltd.
 def send_monitoring_intake_email(to: str) -> bool:
     """Post-purchase welcome for the $495/mo continuous monitoring retainer."""
     subject = "Welcome to PYRESEC Continuous Monitoring"
-    text = """Welcome to PYRESEC Continuous Monitoring.
+    text = f"""Welcome to PYRESEC Continuous Monitoring.
 
 Your retainer is active and your weekly cadence begins as soon as we receive your repository details.
 
