@@ -5,7 +5,11 @@ Avoids importing heavy scripts like git_scraper or telegram_app.
 """
 
 import os
+import sys
 import httpx
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import email_audit
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 PYRESEC_SENDER = os.getenv("PYRESEC_SENDER", "onboarding@resend.dev")
@@ -78,8 +82,16 @@ def send_email(to: str, subject: str, text_body: str, html_body: str = "") -> bo
             json=payload,
             timeout=30.0,
         )
-        return r.status_code in (200, 201)
-    except Exception:
+        ok = r.status_code in (200, 201)
+        email_audit.log_email(
+            to, subject,
+            source="notify.intake" if "Remediation is active" in subject or "Continuous Monitoring" in subject else "notify.alert",
+            status="success" if ok else "failed",
+            error="" if ok else f"{r.status_code}: {r.text[:200]}",
+        )
+        return ok
+    except Exception as e:
+        email_audit.log_email(to, subject, "notify", "failed", str(e))
         return False
 
 
