@@ -8,7 +8,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from fastapi_x402 import init_x402, pay
+import httpx
 from coinbase_agentkit import AgentKit, AgentKitConfig, EthAccountWalletProvider, EthAccountWalletProviderConfig
 from eth_account import Account
 from web3 import Web3
@@ -200,9 +202,10 @@ async def services_page():
         "mailto:pyresec@nanoclonesystems.com?subject=Monitoring%20Retainer")
     return HTMLResponse(content=html)
 
-# ==================== PRIVACY & TERMS PAGES ====================
+# ==================== PRIVACY, TERMS & CANCEL PAGES ====================
 _PRIVACY_HTML = None
 _TERMS_HTML = None
+_CANCEL_HTML = None
 
 def _get_privacy_html():
     global _PRIVACY_HTML
@@ -220,6 +223,14 @@ def _get_terms_html():
             _TERMS_HTML = f.read().replace("{{BASE_URL}}", BASE_URL)
     return _TERMS_HTML
 
+def _get_cancel_html():
+    global _CANCEL_HTML
+    if _CANCEL_HTML is None:
+        path = os.path.join(os.path.dirname(__file__), "templates", "cancel_monitoring.html")
+        with open(path, "r", encoding="utf-8") as f:
+            _CANCEL_HTML = f.read().replace("{{BASE_URL}}", BASE_URL)
+    return _CANCEL_HTML
+
 @app.get("/privacy", include_in_schema=False)
 async def privacy_policy():
     return HTMLResponse(content=_get_privacy_html())
@@ -227,6 +238,10 @@ async def privacy_policy():
 @app.get("/terms", include_in_schema=False)
 async def terms_conditions():
     return HTMLResponse(content=_get_terms_html())
+
+@app.get("/cancel-monitoring", include_in_schema=False)
+async def cancel_monitoring_page():
+    return HTMLResponse(content=_get_cancel_html())
 
 # ==================== ROBOTS.TXT ====================
 @app.get("/robots.txt", include_in_schema=False)
@@ -240,6 +255,7 @@ Allow: /openapi.json
 Allow: /mcp/manifest.json
 Allow: /privacy
 Allow: /terms
+Allow: /cancel-monitoring
 Disallow: /admin/
 Disallow: /v1/
 
@@ -259,6 +275,7 @@ async def sitemap_xml():
   <url><loc>{BASE_URL}/health</loc><lastmod>{now}</lastmod><changefreq>daily</changefreq><priority>0.5</priority></url>
   <url><loc>{BASE_URL}/privacy</loc><lastmod>{now}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>{BASE_URL}/terms</loc><lastmod>{now}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>{BASE_URL}/cancel-monitoring</loc><lastmod>{now}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
 </urlset>"""
     return PlainTextResponse(content=xml, media_type="application/xml")
 
@@ -346,6 +363,73 @@ async def revenue_summary():
         "summary": summary,
         "recent_payments": recent,
     }
+
+# ==================== BILLING / CANCELLATION PORTAL ====================
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+
+@app.get("/v1/billing/portal", tags=["Billing"], summary="Stripe Customer Portal (secure cancellation)")
+async def billing_portal(email: str = "", redirect: bool = True):
+    """Return a Stripe Customer Portal URL for the subscriber email.
+
+    The email address is used as proof of ownership. If no Stripe customer
+    is found, a fallback email-based cancellation path is returned.
+    """
+    if not email or "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="A valid email address is required.")
+
+    if not STRIPE_SECRET_KEY:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unavailable",
+                "message": "Self-serve portal is not configured yet.",
+                "cancel_url": f"{BASE_URL}/cancel-monitoring",
+                "fallback_email": "pyresec@nanoclonesystems.com",
+                "fallback_subject": "CANCEL MONITORING",
+            }
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # 1. Find Stripe customer by email
+            search_resp = await client.get(
+                "https://api.stripe.com/v1/customers/search",
+                headers={"Authorization": f"Bearer {STRIPE_SECRET_KEY}"},
+                params={"query": f"email:'{email}'"},
+            )
+            search_resp.raise_for_status()
+            customers = search_resp.json().get("data", [])
+            if not customers:
+                return JSONResponse(
+                    status_code=404,
+                    content={
+                        "status": "not_found",
+                        "message": "No active Stripe subscription found for that email.",
+                        "cancel_url": f"{BASE_URL}/cancel-monitoring",
+                        "fallback_email": "pyresec@nanoclonesystems.com",
+                        "fallback_subject": "CANCEL MONITORING",
+                    }
+                )
+            customer_id = customers[0]["id"]
+
+            # 2. Create a short-lived Stripe Billing Portal session
+            portal_resp = await client.post(
+                "https://api.stripe.com/v1/billing_portal/sessions",
+                headers={"Authorization": f"Bearer {STRIPE_SECRET_KEY}"},
+                data={
+                    "customer": customer_id,
+                    "return_url": f"{BASE_URL}/cancel-monitoring?status=done",
+                },
+            )
+            portal_resp.raise_for_status()
+            portal_url = portal_resp.json().get("url")
+
+            if redirect and portal_url:
+                return RedirectResponse(url=portal_url)
+            return JSONResponse(status_code=200, content={"status": "success", "url": portal_url})
+
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Stripe API error: {e}")
 
 # ==================== TIER 1: QUICK SCAN ($0.01 USDC) ====================
 @app.post(

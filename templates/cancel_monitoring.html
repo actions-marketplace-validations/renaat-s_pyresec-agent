@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cancel PYRESEC Continuous Monitoring</title>
+<meta name="description" content="Securely cancel your PYRESEC Continuous Monitoring subscription.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='20' fill='%23050505'/%3E%3Ctext x='60' y='50' text-anchor='middle' fill='%23dc2626' font-family='monospace' font-size='14' font-weight='bold'%3EPYRESEC%3C/text%3E%3Ctext x='60' y='70' text-anchor='middle' fill='%23666' font-family='monospace' font-size='8'%3EAI AGENT%3C/text%3E%3Ccircle cx='60' cy='35' r='6' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3Cpath d='M40 85 L60 75 L80 85' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--base-950:#050505;--base-900:#0a0a0a;--brand-red:#dc2626;--text-primary:#fff;--text-secondary:rgba(255,255,255,0.6);--text-muted:rgba(255,255,255,0.3);--glass-border:1px solid rgba(255,255,255,0.06);--font-main:"Instrument Sans",system-ui,sans-serif;--font-mono:"JetBrains Mono",monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-main);background:var(--base-950);color:var(--text-primary);min-height:100vh;line-height:1.7}
+.noise-overlay{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%filter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:overlay}
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.orb-red{width:60vw;height:60vw;top:-20%;left:-15%;background:radial-gradient(circle,rgba(220,38,38,0.12) 0%,rgba(220,38,38,0.03) 40%,transparent 70%)}
+.container{max-width:720px;margin:0 auto;padding:6rem 2rem 4rem;position:relative;z-index:2}
+h1{font-size:2.5rem;font-weight:700;margin-bottom:0.5rem;background:linear-gradient(135deg,#fff,#dc2626);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.meta{color:var(--text-muted);font-family:var(--font-mono);font-size:0.8rem;margin-bottom:3rem}
+h2{font-size:1.4rem;font-weight:600;margin:2.5rem 0 1rem;color:#fff}
+p{color:var(--text-secondary);margin-bottom:1rem;font-size:0.95rem}
+a{color:var(--brand-red);text-decoration:none}
+a:hover{text-decoration:underline}
+.cancel-box{background:var(--base-900);border:var(--glass-border);border-radius:16px;padding:1.75rem;margin:2rem 0}
+.cancel-box h3{color:#fff;font-size:1.1rem;margin-bottom:0.75rem}
+.cancel-box p{margin-bottom:0.75rem}
+.cancel-box code{font-family:var(--font-mono);background:rgba(255,255,255,0.05);padding:0.2rem 0.5rem;border-radius:6px;color:#fff}
+.back{display:inline-flex;align-items:center;gap:0.5rem;margin-top:3rem;padding:0.6rem 1.5rem;border-radius:100px;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.2);color:var(--brand-red);font-weight:600;font-size:0.85rem;transition:all 0.3s}
+.back:hover{background:var(--brand-red);color:#000;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="noise-overlay"></div>
+<div class="orb orb-red"></div>
+<div class="container">
+  <h1>Cancel Continuous Monitoring</h1>
+  <div class="meta">Secure, no-account cancellation — NanoClone Life Sciences Ltd.</div>
+
+  <p>We don't hide the cancel button behind a support ticket. You can cancel your PYRESEC Continuous Monitoring subscription at any time and it stops at your next billing cycle.</p>
+
+  <div class="cancel-box">
+    <h3>Option 1 — Email (fastest, no login required)</h3>
+    <p>Send an email from the address you used at Stripe checkout to <a href="mailto:pyresec@nanoclonesystems.com?subject=CANCEL%20MONITORING">pyresec@nanoclonesystems.com</a> with the subject <code>CANCEL MONITORING</code>.</p>
+    <p>We use the sender address as proof of ownership and confirm cancellation within one business day. You keep access until the current paid period ends.</p>
+  </div>
+
+  <div class="cancel-box">
+    <h3>Option 2 — Stripe Customer Portal</h3>
+    <p>If you received a Stripe invoice or receipt, you can also manage or cancel the subscription directly in your <a href="https://billing.stripe.com" target="_blank" rel="noopener">Stripe billing portal</a>.</p>
+    <p>If you cannot find the link, use Option 1 and we will send you a secure, one-time portal URL.</p>
+  </div>
+
+  <h2>What happens after cancellation</h2>
+  <p>• Your weekly scans and delta reports stop at the end of the current billing period.<br>
+  • No partial-month refunds for the current period unless the first weekly scan has not yet run.<br>
+  • All previously delivered baseline reports remain yours.</p>
+
+  <h2>Need help?</h2>
+  <p>Reply to any monitoring report email or contact <a href="mailto:pyresec@nanoclonesystems.com">pyresec@nanoclonesystems.com</a>.</p>
+
+  <a href="/services" class="back">&larr; Back to PYRESEC Services</a>
+</div>
+</body>
+</html>

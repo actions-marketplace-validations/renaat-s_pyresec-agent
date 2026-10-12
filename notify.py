@@ -164,6 +164,12 @@ What happens each week:
 
 Scope note: This tier currently supports public main/master branches only. Private repository access is planned for a future release.
 
+Cancel any time:
+  • Reply to any monitoring email with CANCEL, or
+  • Visit {BASE_URL}/cancel-monitoring for self-serve options.
+
+No account or login required — we use your email address as proof of ownership.
+
 — PYRESEC Agent
 NanoClone Systems Ltd.
 """
@@ -180,5 +186,8 @@ NanoClone Systems Ltd.
         "• Diff against the previous baseline<br>"
         "• Clean markdown delta report by email<br>"
         "• Critical/High findings flagged immediately",
+        "<strong style=\"color:#fff;\">Cancel any time:</strong><br>"
+        "Reply to any monitoring email with <code style=\"background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;\">CANCEL</code>, or use the secure options at<br>"
+        f"<a href=\"{BASE_URL}/cancel-monitoring\" style=\"color:#dc2626;text-decoration:none;\">{BASE_URL}/cancel-monitoring</a>.",
     ])
     return send_email(to, subject, text, html)
