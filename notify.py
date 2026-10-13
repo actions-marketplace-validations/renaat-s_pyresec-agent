@@ -5,15 +5,19 @@ Avoids importing heavy scripts like git_scraper or telegram_app.
 """
 
 import os
+import sys
 import httpx
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
+import email_audit
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 PYRESEC_SENDER = os.getenv("PYRESEC_SENDER", "onboarding@resend.dev")
 PYRESEC_FROM_NAME = os.getenv("PYRESEC_FROM_NAME", "PYRESEC Agent")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
-BASE_URL = os.getenv("PYRESEC_URL",
-                     "https://pyresec-agent-519576377065.us-central1.run.app")
+BASE_URL = os.getenv("PRODUCTION_URL",
+                      "https://pyresec-agent-519576377065.us-central1.run.app")
 
 
 def _branded_html(title: str, paragraphs: list[str]) -> str:
@@ -78,8 +82,16 @@ def send_email(to: str, subject: str, text_body: str, html_body: str = "") -> bo
             json=payload,
             timeout=30.0,
         )
-        return r.status_code in (200, 201)
-    except Exception:
+        ok = r.status_code in (200, 201)
+        email_audit.log_email(
+            to, subject,
+            source="notify.intake" if "Remediation is active" in subject or "Continuous Monitoring" in subject else "notify.alert",
+            status="success" if ok else "failed",
+            error="" if ok else f"{r.status_code}: {r.text[:200]}",
+        )
+        return ok
+    except Exception as e:
+        email_audit.log_email(to, subject, "notify", "failed", str(e))
         return False
 
 
@@ -136,7 +148,7 @@ NanoClone Systems Ltd.
 def send_monitoring_intake_email(to: str) -> bool:
     """Post-purchase welcome for the $495/mo continuous monitoring retainer."""
     subject = "Welcome to PYRESEC Continuous Monitoring"
-    text = """Welcome to PYRESEC Continuous Monitoring.
+    text = f"""Welcome to PYRESEC Continuous Monitoring.
 
 Your retainer is active and your weekly cadence begins as soon as we receive your repository details.
 
@@ -151,6 +163,12 @@ What happens each week:
   • Critical or High findings are flagged immediately
 
 Scope note: This tier currently supports public main/master branches only. Private repository access is planned for a future release.
+
+Cancel any time:
+  • Reply to any monitoring email with CANCEL, or
+  • Visit {BASE_URL}/cancel-monitoring for self-serve options.
+
+No account or login required — we use your email address as proof of ownership.
 
 — PYRESEC Agent
 NanoClone Systems Ltd.
@@ -168,5 +186,8 @@ NanoClone Systems Ltd.
         "• Diff against the previous baseline<br>"
         "• Clean markdown delta report by email<br>"
         "• Critical/High findings flagged immediately",
+        "<strong style=\"color:#fff;\">Cancel any time:</strong><br>"
+        "Reply to any monitoring email with <code style=\"background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;\">CANCEL</code>, or use the secure options at<br>"
+        f"<a href=\"{BASE_URL}/cancel-monitoring\" style=\"color:#dc2626;text-decoration:none;\">{BASE_URL}/cancel-monitoring</a>.",
     ])
     return send_email(to, subject, text, html)

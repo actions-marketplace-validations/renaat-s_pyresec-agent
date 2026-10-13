@@ -43,6 +43,7 @@ import playbooks
 import probe
 import revenue_ledger
 import telegram_app
+import email_audit
 
 # ==================== CONFIGURATION ====================
 
@@ -269,9 +270,12 @@ def send_email(to_email: str, subject: str, body: str, html: str = None) -> bool
         resp = client.post(url, headers=headers, json=payload)
 
         if resp.status_code == 200 or resp.status_code == 201:
+            email_audit.log_email(to_email, subject, "git_scraper", "success")
             return True
         else:
-            print(f"  [EMAIL ERROR] {resp.status_code}: {resp.text[:200]}")
+            error = f"{resp.status_code}: {resp.text[:200]}"
+            print(f"  [EMAIL ERROR] {error}")
+            email_audit.log_email(to_email, subject, "git_scraper", "failed", error)
             return False
 
 

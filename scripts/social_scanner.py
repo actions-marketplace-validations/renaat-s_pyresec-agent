@@ -29,6 +29,8 @@ import json
 import time
 import argparse
 import re
+import logging
+import traceback
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from pathlib import Path
@@ -43,6 +45,18 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 import httpx
+
+# File logging so daemon crashes and approvals can be diagnosed
+LOG_FILE = Path("scripts/.social_scanner.log")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+logger = logging.getLogger("social_scanner")
 
 import playbooks
 import probe
@@ -827,20 +841,19 @@ def run_daemon(platforms: list[str], dry_run: bool = False):
 
     tg_enabled = telegram_app.configured() and not dry_run
 
-    print("=" * 60)
+    logger.info("=" * 60)
     if PAUSE_SOCIAL_OUTREACH:
-        print("  PYRESEC Social Scanner — Telegram approvals only (ACSA outreach paused)")
+        logger.info("PYRESEC Social Scanner — Telegram approvals only (ACSA outreach paused)")
     else:
-        print("  PYRESEC Social Scanner — Autonomous Lead Discovery")
-    print("=" * 60)
-    print(f"  Platforms: {', '.join(platforms)}")
-    print(f"  Poll interval: {POLL_INTERVAL}s")
-    print(f"  Promo budget: {SCAN_PROMO_BUDGET}/day")
-    print(f"  Dry run: {dry_run}")
-    print(f"  ACSA outreach: {'PAUSED' if PAUSE_SOCIAL_OUTREACH else 'ACTIVE'}")
-    print(f"  Telegram approvals: {'ON' if tg_enabled else 'OFF (dry-run or no token)'}")
-    print(f"  Keywords: {len(KEYWORDS)}")
-    print("=" * 60)
+        logger.info("PYRESEC Social Scanner — Autonomous Lead Discovery")
+    logger.info("Platforms: %s", ", ".join(platforms))
+    logger.info("Poll interval: %ss", POLL_INTERVAL)
+    logger.info("Promo budget: %s/day", SCAN_PROMO_BUDGET)
+    logger.info("Dry run: %s", dry_run)
+    logger.info("ACSA outreach: %s", "PAUSED" if PAUSE_SOCIAL_OUTREACH else "ACTIVE")
+    logger.info("Telegram approvals: %s", "ON" if tg_enabled else "OFF (dry-run or no token)")
+    logger.info("Keywords: %s", len(KEYWORDS))
+    logger.info("=" * 60)
 
     if not TWITTER_BEARER_TOKEN and "x" in platforms:
         print("\n[WARNING] TWITTER_BEARER_TOKEN not set — X scanning disabled")
@@ -861,10 +874,12 @@ def run_daemon(platforms: list[str], dry_run: bool = False):
             # --- Telegram approvals first (picks up taps within 25s) ---
             if tg_enabled:
                 updates = telegram_app.get_updates(offset, timeout=25)
-                for upd in updates:
-                    offset = upd["update_id"] + 1
                 if updates:
-                    handle_telegram_updates(updates)
+                    logger.info("Received %s Telegram update(s)", len(updates))
+                    for upd in updates:
+                        offset = upd["update_id"] + 1
+                    handled = handle_telegram_updates(updates)
+                    logger.info("Handled %s Telegram action(s)", handled)
 
             # --- Social poll (every POLL_INTERVAL) ---
             now = time.time()
@@ -893,10 +908,10 @@ def run_daemon(platforms: list[str], dry_run: bool = False):
                 time.sleep(30)
 
         except KeyboardInterrupt:
-            print("\n[SHUTDOWN] Stopping scanner...")
+            logger.info("[SHUTDOWN] Stopping scanner...")
             break
         except Exception as e:
-            print(f"\n[ERROR] {e}")
+            logger.exception("[ERROR] Unhandled exception in main loop: %s", e)
             time.sleep(10)
 
 
