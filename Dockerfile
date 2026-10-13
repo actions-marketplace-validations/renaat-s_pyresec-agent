@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+ARG BUILD_ID=0
+RUN echo "Build ID: $BUILD_ID"
+
 # TTF fonts for PDF report generation (report_generator falls back to these)
 RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
