@@ -18,8 +18,10 @@ COPY population_controller.py .
 COPY payment_logger.py .
 COPY stripe_webhook.py .
 COPY notify.py .
+COPY scripts/__init__.py scripts/__init__.py
 COPY scripts/report_generator.py scripts/report_generator.py
 COPY scripts/revenue_ledger.py scripts/revenue_ledger.py
+COPY scripts/email_audit.py scripts/email_audit.py
 COPY static/ static/
 COPY templates/ templates/
 
