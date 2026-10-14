@@ -228,9 +228,9 @@ def _email_html(kind: str, lead: dict, scan: dict) -> str:
     else:
         counts = escape(_risk_counts(scan))
         pitch = (f"We ran a security baseline on {repo_e}: {counts} "
-                 f"({rating} rating). Code changes daily - what's clean today can "
-                 f"regress after the next merge. For {escape(PRICE_RETAINER)} we "
-                 f"watch it for you:")
+                 f"({rating} rating). That clean rating is worth proving - and "
+                 f"keeping. For {escape(PRICE_RETAINER)} we turn your security "
+                 f"posture into a verifiable, recurring artifact:")
         block_label = f"BASELINE RESULT - {rating} RATED"
         if "/" in PRICE_RETAINER:
             price_main, price_sub = PRICE_RETAINER.split("/", 1)
@@ -238,11 +238,11 @@ def _email_html(kind: str, lead: dict, scan: dict) -> str:
         else:
             price_main, price_sub = escape(PRICE_RETAINER), "per month"
         row_desc = ("Continuous Monitoring<br>"
-                    "Weekly re-scan + dependency CVE watch<br>"
-                    "Regression alerts + monthly PDF report")
-        chips = [("Weekly re-scan", "diff-aware, default branch"),
-                 ("CVE watch", "lockfile dependency alerts"),
-                 ("Monthly PDF", "baseline report for your team")]
+                    "Regression protection after every merge<br>"
+                    "Monthly signed PDF for auditors &amp; investors")
+        chips = [("Weekly re-scan", "regressions caught same-day"),
+                 ("CVE watch", "supply-chain exposure alerts"),
+                 ("Signed PDF", "SHA-verified compliance artifact")]
         cross = (f"Already seeing issues? Proof-Led Remediation fixes them for "
                  f"{escape(PRICE_REMEDIATION)} one-time - verified patch + signed PDF.")
         pay_parts = []
@@ -372,11 +372,16 @@ Details and methodology: {DOCS_URL}
 
 def monitoring_subject(lead: dict) -> str:
     repo = lead.get("repo") or lead.get("full_name") or "your repo"
-    return f"{repo}: security baseline ready (weekly monitoring available)"
+    return f"{repo}: security baseline ready (continuous compliance available)"
 
 
 def monitoring_email(lead: dict, scan: dict, sender_name: str = "PYRESEC") -> tuple[str, str, str]:
-    """Returns (subject, text_body, html_body). Baseline result + recurring watch offer."""
+    """Returns (subject, text_body, html_body).
+
+    Clean/medium repos get the compliance angle, not the "fix what you have"
+    angle: regression protection after every merge + a monthly signed PDF
+    artifact auditors and investors can verify.
+    """
     repo = lead.get("repo") or lead.get("full_name") or "your repository"
     name = (lead.get("name") or "").split()[0:1]
     hi = f"Hi {name[0]}," if name else "Hi,"
@@ -391,13 +396,17 @@ We ran a security baseline on {repo}: {count_str} ({rating} rating).
 
 {proof}
 
-Code changes daily - what's clean today can regress after the next merge. For
-{PRICE_RETAINER} we watch it for you:
+That clean rating is worth proving - and keeping. Code merges daily; one bad
+merge and the status quo is gone. For {PRICE_RETAINER} we turn your security
+posture into a verifiable, recurring artifact:
 
-  * Weekly re-scan of the default branch (diff-aware)
-  * Dependency CVE watch across your lockfiles
+  * Weekly re-scan of the default branch (diff-aware) - regressions caught
+    the day they land, not the quarter after
+  * Dependency CVE watch across your lockfiles - supply-chain exposure
+    flagged before it reaches mainnet
+  * Monthly signed PDF baseline - a cryptographic artifact (SHA-fingerprinted)
+    your auditors, VCs, and enterprise customers can verify independently
   * Regression alerts the moment new findings appear
-  * Monthly PDF baseline report for your team/investors
 
 {payment_lines('monitoring')}
 

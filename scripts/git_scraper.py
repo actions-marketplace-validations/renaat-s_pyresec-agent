@@ -86,6 +86,33 @@ SEARCH_QUERIES = [
     {"query": "authentication jwt security pushed:>={date}", "type": "fastapi", "label": "Auth/JWT"},
     {"query": "payment stripe integration pushed:>={date}", "type": "fastapi", "label": "Payments"},
     {"query": "docker kubernetes deploy pushed:>={date}", "type": "fastapi", "label": "DevOps"},
+    # Fresh pool — dependency-update / maintenance-activity signals (repos
+    # touching lockfiles recently are actively maintained = monitoring buyers)
+    {"query": "dependabot OR renovate pushed:>={date}", "type": "fastapi", "label": "Dependency Bot"},
+    {"query": "package.json updated pushed:>={date}", "type": "fastapi", "label": "package.json Update"},
+    {"query": "requirements.txt updated pushed:>={date}", "type": "fastapi", "label": "requirements.txt"},
+    {"query": "cargo update pushed:>={date}", "type": "web3", "label": "Cargo Update"},
+    {"query": "golang dependencies updated pushed:>={date}", "type": "fastapi", "label": "Go Dependencies"},
+    {"query": "bump version release pushed:>={date}", "type": "fastapi", "label": "Release Bump"},
+    {"query": "codeql github actions security pushed:>={date}", "type": "fastapi", "label": "CodeQL CI"},
+    {"query": "trivy OR snyk scan pipeline pushed:>={date}", "type": "fastapi", "label": "Security Scanner CI"},
+    {"query": "audit findings open pull request pushed:>={date}", "type": "web3", "label": "Audit PRs"},
+    {"query": "topic:web3 organization pushed:>={date}", "type": "web3", "label": "Topic:web3 Org"},
+    {"query": "topic:defi pushed:>={date}", "type": "web3", "label": "Topic:defi"},
+    {"query": "topic:ethereum pushed:>={date}", "type": "web3", "label": "Topic:ethereum"},
+    {"query": "erc4626 OR uniswap v4 pushed:>={date}", "type": "web3", "label": "Uniswap/ERC4626"},
+    {"query": "zksync OR starknet contract pushed:>={date}", "type": "web3", "label": "L2 Contracts"},
+    {"query": "safe multisig gnosis pushed:>={date}", "type": "web3", "label": "Safe Multisig"},
+    {"query": "fastapi postgres production pushed:>={date}", "type": "fastapi", "label": "FastAPI Prod"},
+    {"query": "nestjs api server pushed:>={date}", "type": "fastapi", "label": "NestJS API"},
+    {"query": "rails api pushed:>={date}", "type": "fastapi", "label": "Rails API"},
+    {"query": "ruby on rails security pushed:>={date}", "type": "fastapi", "label": "Rails Security"},
+    {"query": "spring boot api pushed:>={date}", "type": "fastapi", "label": "Spring Boot"},
+    {"query": "laravel api pushed:>={date}", "type": "fastapi", "label": "Laravel API"},
+    {"query": "oauth2 client credentials pushed:>={date}", "type": "fastapi", "label": "OAuth2"},
+    {"query": "webhook signature verification pushed:>={date}", "type": "fastapi", "label": "Webhook Sig"},
+    {"query": "api rate limiting security pushed:>={date}", "type": "fastapi", "label": "Rate Limiting"},
+    {"query": "vault secrets management pushed:>={date}", "type": "fastapi", "label": "Secrets Mgmt"},
 ]
 
 # Deduplication file
@@ -359,7 +386,15 @@ def run_scraper(dry_run: bool = False, max_repos: int = 30, direct: bool = False
     searches = 0
     batch: list[dict] = []
 
-    for query_config in SEARCH_QUERIES:
+    # Rotate query order daily so repeated runs don't exhaust the same
+    # top-10 results every time (seed derived from the UTC date).
+    day_seed = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    query_list = sorted(
+        SEARCH_QUERIES,
+        key=lambda q: hash(f"{day_seed}:{q['query']}"),
+    )
+
+    for query_config in query_list:
         if len(batch) >= max_repos:
             break
         query = query_config["query"].format(date=date_threshold)
