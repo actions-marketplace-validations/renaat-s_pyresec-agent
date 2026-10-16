@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+ARG BUILD_ID=0
+RUN echo "Build ID: $BUILD_ID"
+
 # TTF fonts for PDF report generation (report_generator falls back to these)
 RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
@@ -18,8 +21,10 @@ COPY population_controller.py .
 COPY payment_logger.py .
 COPY stripe_webhook.py .
 COPY notify.py .
+COPY scripts/__init__.py scripts/__init__.py
 COPY scripts/report_generator.py scripts/report_generator.py
 COPY scripts/revenue_ledger.py scripts/revenue_ledger.py
+COPY scripts/email_audit.py scripts/email_audit.py
 COPY static/ static/
 COPY templates/ templates/
 

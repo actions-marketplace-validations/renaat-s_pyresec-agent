@@ -1,0 +1,8 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '--build-arg', 'BUILD_ID=$_BUILD_ID', '-t', 'us-central1-docker.pkg.dev/pyresec-agent/pyresec/pyresec-agent:$_TAG', '.']
+images:
+- 'us-central1-docker.pkg.dev/pyresec-agent/pyresec/pyresec-agent:$_TAG'
+substitutions:
+  _BUILD_ID: '0'
+  _TAG: latest

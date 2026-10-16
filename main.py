@@ -166,6 +166,8 @@ def _get_landing_html():
         landing_path = os.path.join(os.path.dirname(__file__), "templates", "landing.html")
         with open(landing_path, "r") as f:
             _LANDING_HTML = f.read().replace("{{BASE_URL}}", BASE_URL)
+        _LANDING_HTML = _LANDING_HTML.replace(
+            "{{CALENDLY_URL}}", os.getenv("CALENDLY_URL", "").strip())
     return _LANDING_HTML
 
 @app.get("/docs", include_in_schema=False)
@@ -200,6 +202,8 @@ async def services_page():
         "{{STRIPE_RETAINER}}",
         stripe_retainer or
         "mailto:pyresec@nanoclonesystems.com?subject=Monitoring%20Retainer")
+    calendly = os.getenv("CALENDLY_URL", "").strip()
+    html = html.replace("{{CALENDLY_URL}}", calendly)
     return HTMLResponse(content=html)
 
 # ==================== PRIVACY, TERMS & CANCEL PAGES ====================
