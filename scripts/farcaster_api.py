@@ -181,16 +181,20 @@ def setup_signer(mnemonic: str, sponsor_neynar: bool = True) -> dict:
 # ==================== PUBLISHING ====================
 
 def publish_cast(text: str, parent_hash: Optional[str] = None,
-                 parent_fid: Optional[int] = None) -> dict:
+                 parent_fid: Optional[int] = None,
+                 channels: Optional[list[str]] = None) -> dict:
     """
     Publish a cast to Farcaster via Neynar.
     If parent_hash/parent_fid given, posts as a reply under that cast.
+    channels: optional list of channel ids (e.g. ["security", "developer"]).
     Returns dict with success + cast hash.
     """
     body = {"signer_uuid": get_signer_uuid(), "text": text}
     if parent_hash and parent_fid:
         body["parent"] = parent_hash
         body["parent_author_fid"] = parent_fid
+    if channels:
+        body["channels"] = channels
 
     resp = httpx.post(f"{NEYNAR_API}/v2/farcaster/cast", headers=_headers(),
                       json=body, timeout=30.0)
