@@ -20,6 +20,8 @@ COPY audit_logger.py .
 COPY population_controller.py .
 COPY payment_logger.py .
 COPY stripe_webhook.py .
+COPY cloud_store.py .
+COPY resend_webhook.py .
 COPY notify.py .
 COPY scripts/__init__.py scripts/__init__.py
 COPY scripts/report_generator.py scripts/report_generator.py
