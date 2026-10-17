@@ -339,7 +339,8 @@ def send_followup(to: str, subject: str, text: str, html: str, stage: int) -> bo
 
 # ==================== MAIN ====================
 
-def run(dry_run: bool = False) -> dict:
+def run(dry_run: bool = False, force: bool = False,
+        only: list[str] | None = None) -> dict:
     now = datetime.now(timezone.utc)
     state = load_state()
     leads = collect_sent_leads()
@@ -347,6 +348,8 @@ def run(dry_run: bool = False) -> dict:
     pipeline = fetch_pipeline_state()
     paid |= cloud_paid_leads(pipeline)
     suppressed = suppressed_emails(pipeline)
+
+    only_l = [s.strip().lower() for s in (only or []) if s.strip()]
 
     summary = {"timestamp": now.isoformat(), "dry_run": dry_run,
                "leads_considered": len(leads),
@@ -358,6 +361,8 @@ def run(dry_run: bool = False) -> dict:
         repo = (lead["repo"] or "").strip()
         key = repo.lower()
         if not key:
+            continue
+        if only_l and not any(s in key for s in only_l):
             continue
         if key in paid:
             summary["skipped"]["paid"] += 1
@@ -377,7 +382,7 @@ def run(dry_run: bool = False) -> dict:
             flag = f"fu{stage}"
             if st.get(flag):
                 continue
-            if age_days < threshold:
+            if age_days < threshold and not force:
                 summary["skipped"]["not_due"] += 1
                 continue
             if stage == 2 and not st.get("fu1"):
@@ -409,12 +414,18 @@ def run(dry_run: bool = False) -> dict:
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="PYRESEC Follow-Up Engine")
     p.add_argument("--dry-run", action="store_true", help="Preview only")
+    p.add_argument("--force", action="store_true",
+                   help="Ignore the day threshold (send the next due stage now)")
+    p.add_argument("--only", default="",
+                   help="Comma-separated repo substrings to limit the run "
+                        "(e.g. 'soulboundsecurity,apitally')")
     args = p.parse_args()
+    only = [s for s in args.only.split(",") if s.strip()] if args.only else None
 
     print("=" * 60)
     print("  PYRESEC FOLLOW-UP ENGINE" + ("  (DRY RUN)" if args.dry_run else ""))
     print("=" * 60)
-    s = run(dry_run=args.dry_run)
+    s = run(dry_run=args.dry_run, force=args.force, only=only)
     print(f"  Leads considered: {s['leads_considered']}")
     print(f"  Sent: {len(s['sent'])}")
     print(f"  Skipped: {s['skipped']}")
