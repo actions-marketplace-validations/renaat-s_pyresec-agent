@@ -679,6 +679,53 @@ def handle_telegram_updates(updates: list[dict], verbose: bool = True) -> int:
             handled += 1
             continue
 
+        # === APPROVE → publish social post bundle (Phase 2 content) ===
+        if kind == "social_post":
+            telegram_app.answer_callback(cb_id, "Publishing...")
+            import social_pipeline
+            draft = entry.get("draft") or {}
+            errors = []
+            cast_url = ""
+            try:
+                results = social_pipeline.post_farcaster_thread(
+                    draft.get("farcaster", ""), channels=["security"])
+                cast_url = (results[-1].get("url", "") if results else "")
+            except Exception as e:
+                errors.append(f"Farcaster: {e}")
+                if verbose:
+                    print(f"  [TG ERROR] social farcaster: {e}")
+            # Deliver X thread + LinkedIn as plain texts for copy-paste
+            try:
+                tweets = draft.get("x_thread", [])
+                for i, tweet in enumerate(tweets, 1):
+                    telegram_app.notify(
+                        f"📄 X tweet {i}/{len(tweets)} — copy & paste:\n\n{tweet}")
+                if draft.get("linkedin"):
+                    telegram_app.notify(
+                        f"📄 LinkedIn post — copy & paste:\n\n{draft['linkedin']}")
+            except Exception as e:
+                errors.append(f"delivery: {e}")
+            entry["status"] = "posted" if not errors else "error"
+            entry["cast_url"] = cast_url
+            if errors:
+                entry["error"] = "; ".join(errors)
+            if tg_msg:
+                if errors:
+                    telegram_app.edit_message(
+                        tg_msg,
+                        f"⚠️ Social bundle partial — {draft.get('slug', '')}\n"
+                        + "\n".join(errors))
+                else:
+                    telegram_app.edit_message(
+                        tg_msg,
+                        f"✅ Social bundle published — {draft.get('slug', '')}\n"
+                        f"Farcaster: {cast_url}\n"
+                        f"X thread + LinkedIn texts sent above (copy-paste).")
+            if verbose:
+                print(f"  [TG] Social bundle {entry['status']} ({draft.get('slug', '')})")
+            handled += 1
+            continue
+
         # === APPROVE → publish to Farcaster ===
         telegram_app.answer_callback(cb_id, "Posting...")
         try:

@@ -14,9 +14,15 @@ Channels:
   LinkedIn  longer narrative                  — manual post
 
 Usage:
-  python scripts/social_pipeline.py                    # draft latest case study
-  python scripts/social_pipeline.py --post-farcaster   # draft + publish to Farcaster
-  python scripts/social_pipeline.py --case <slug>      # pick a specific case study
+  python scripts/social_pipeline.py                 # draft + send Telegram approval card
+  python scripts/social_pipeline.py --print-only    # preview locally, nothing queued
+  python scripts/social_pipeline.py --post-farcaster  # bypass gate, publish now (testing)
+  python scripts/social_pipeline.py --case <slug>   # pick a specific case study
+
+Approval: the card lands in the same Telegram flow as lead approvals.
+On Approve (daemon running): Farcaster cast auto-posts to /security;
+X thread + LinkedIn texts arrive as messages for copy-paste (their APIs
+need business apps — manual posting for now, automatable later).
 
 Drafts: reports/shadow_audit/posts_<slug>_<date>.md (+ .posts.json)
 """
@@ -286,11 +292,50 @@ def post_farcaster_thread(text: str, channels: list[str] | None = None) -> list[
     return results
 
 
+def queue_for_telegram(draft: dict, verbose: bool = True) -> str:
+    """Send an approval card to Telegram; entry waits in the shared queue.
+
+    The running social_scanner daemon handles the Approve tap: publishes the
+    Farcaster cast and delivers the X thread + LinkedIn texts for copy-paste.
+    """
+    import time
+    import social_scanner
+    import telegram_app
+
+    qid = f"{int(time.time() * 1000)}-social"
+    tweets = draft.get("x_thread", [])
+    preview = (tweets[0] if tweets else draft.get("farcaster", ""))[:600]
+    header = (
+        f"📱 Social drafts ready — {draft['slug']} ({draft['rating']})\n"
+        f"On approve: Farcaster auto-post (/security) + X thread & LinkedIn "
+        f"texts delivered here for copy-paste."
+    )
+    body = f"Preview (X tweet 1):\n{preview}\n\n…plus {max(len(tweets)-1, 0)} more " \
+           f"tweet(s) + LinkedIn post."
+    msg_id = telegram_app.send_lead(header, body, qid)
+
+    queue = social_scanner.load_queue()
+    queue.append({
+        "qid": qid,
+        "kind": "social_post",
+        "status": "pending",
+        "tg_message_id": msg_id,
+        "draft": draft,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    social_scanner.save_queue(queue)
+    if verbose:
+        print(f"[social] approval card sent to Telegram (qid={qid})")
+    return qid
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="PYRESEC Social Pipeline")
     p.add_argument("--case", default="", help="case-study slug substring")
+    p.add_argument("--print-only", action="store_true",
+                   help="print drafts only — do not queue for Telegram")
     p.add_argument("--post-farcaster", action="store_true",
-                   help="publish the Farcaster cast (to /security channel)")
+                   help="bypass the approval gate and publish to Farcaster now")
     p.add_argument("--channel", default="security",
                    help="Farcaster channel id (default: security)")
     args = p.parse_args()
@@ -318,9 +363,12 @@ def main() -> None:
         results = post_farcaster_thread(draft["farcaster"], channels=[args.channel])
         for r in results:
             print(f"[social] cast: {r.get('url') or r}")
+    elif args.print_only:
+        print("\n[social] print-only — nothing queued.")
     else:
-        print("\n[social] draft only — re-run with --post-farcaster to publish "
-              "the cast to Farcaster.")
+        queue_for_telegram(draft)
+        print("[social] approve in Telegram (same flow as lead approvals). "
+              "Keep the social_scanner daemon running.")
 
 
 if __name__ == "__main__":
