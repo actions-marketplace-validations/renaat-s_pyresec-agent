@@ -10,8 +10,11 @@ Run this in Cloud Shell before deploying:
         --env-vars-file cloudrun.env
 
 The generated `cloudrun.env` contains secrets — do not commit it.
+Values are JSON-quoted so gcloud's YAML parser always sees strings
+(bare `true`, empty values, etc. used to parse as null/bool and fail).
 """
 
+import json
 from pathlib import Path
 
 
@@ -22,7 +25,7 @@ def main():
         raise SystemExit(".env not found")
 
     lines = []
-    for raw in src.read_text(encoding="utf-8").splitlines():
+    for raw in src.read_text(encoding="utf-8-sig").splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -31,7 +34,7 @@ def main():
         value = value.strip().strip('"').strip("'")
         if not key:
             continue
-        lines.append(f'{key}={value}')
+        lines.append(f"{key}: {json.dumps(value)}")
 
     dst.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Generated {dst} with {len(lines)} variables")
