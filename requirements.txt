@@ -12,3 +12,4 @@ eth-account
 mcp>=2.0.0
 httpx
 fpdf2
+google-cloud-storage

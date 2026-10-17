@@ -872,6 +872,48 @@ async def stripe_webhook_endpoint(request: Request, background_tasks: Background
 
     return JSONResponse(result)
 
+# ==================== RESEND WEBHOOK -> SUPPRESSION ====================
+import cloud_store
+import resend_webhook
+
+@app.post("/v1/webhooks/resend", include_in_schema=False)
+async def resend_webhook_endpoint(request: Request):
+    """Resend delivery events -> follow-up suppression list (cloud_store).
+
+    Configure in Resend: Webhooks -> {PRODUCTION_URL}/v1/webhooks/resend
+      events: email.bounced, email.complained, email.clicked
+    Requires env RESEND_WEBHOOK_SECRET (whsec_...) on this instance.
+    """
+    secret = os.getenv("RESEND_WEBHOOK_SECRET", "").strip()
+    if not secret:
+        return JSONResponse({"detail": "RESEND_WEBHOOK_SECRET not configured"},
+                            status_code=503)
+    body = await request.body()
+    try:
+        result = resend_webhook.handle_raw(body, dict(request.headers), secret)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return JSONResponse(result)
+
+
+@app.get("/v1/pipeline/state", include_in_schema=False)
+async def pipeline_state(request: Request):
+    """Shared pipeline state for the local outreach engines.
+
+    Returns {"suppressions": [...], "paid": [...]} from cloud_store.
+    Requires header X-Pipeline-Token == env PIPELINE_TOKEN.
+    """
+    token = os.getenv("PIPELINE_TOKEN", "").strip()
+    if not token:
+        return JSONResponse({"detail": "PIPELINE_TOKEN not configured"},
+                            status_code=503)
+    if request.headers.get("X-Pipeline-Token", "") != token:
+        raise HTTPException(status_code=401, detail="bad token")
+    if not cloud_store.configured():
+        return JSONResponse({"detail": "SUPPRESSION_STORE not configured"},
+                            status_code=503)
+    return JSONResponse(cloud_store.load())
+
 # ==================== ADMIN ENDPOINTS (protected) ====================
 ADMIN_KEY = os.getenv("ADMIN_KEY", "changeme")
 

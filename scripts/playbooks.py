@@ -34,6 +34,7 @@ DOCS_URL = os.getenv("PYRESEC_DOCS_URL",
 BASE_URL = os.getenv("PYRESEC_URL",
                      "https://pyresec-agent-519576377065.us-central1.run.app")
 SERVICES_URL = f"{BASE_URL}/services"
+CALENDLY_URL = os.getenv("CALENDLY_URL", "").strip()
 
 ICP_MIN_SCORE = int(os.getenv("ICP_MIN_SCORE", "65"))
 
@@ -174,6 +175,8 @@ def payment_lines(playbook: str) -> str:
         if STRIPE_RETAINER:
             lines.append(f"Activate monitoring: {STRIPE_RETAINER}")
         lines.append(f"Or reply 'MONITOR' and we'll send a USDC (x402) subscription link.")
+    if CALENDLY_URL:
+        lines.append(f"Prefer to talk first? Book a 30-min call: {CALENDLY_URL}")
     return "\n".join(lines)
 
 
@@ -224,6 +227,10 @@ def _email_html(kind: str, lead: dict, scan: dict) -> str:
         pay_parts.append(
             f'<a href="{escape(DOCS_URL)}" style="color:#dc2626;">'
             f'USDC on Base via x402 - $500 flat</a>')
+        if CALENDLY_URL:
+            pay_parts.append(
+                f'<a href="{escape(CALENDLY_URL)}" style="color:#dc2626;" '
+                f'target="_blank" rel="noopener">Book a 30-min call first</a>')
         pay_line = " &nbsp;&nbsp;|&nbsp;&nbsp; ".join(pay_parts)
     else:
         counts = escape(_risk_counts(scan))
@@ -251,6 +258,10 @@ def _email_html(kind: str, lead: dict, scan: dict) -> str:
                 f'<a href="{escape(STRIPE_RETAINER)}" style="color:#dc2626;">'
                 f'Activate monitoring - {escape(PRICE_RETAINER)}</a>')
         pay_parts.append("Reply 'MONITOR' for a USDC (x402) subscription link")
+        if CALENDLY_URL:
+            pay_parts.append(
+                f'<a href="{escape(CALENDLY_URL)}" style="color:#dc2626;" '
+                f'target="_blank" rel="noopener">Book a 30-min call first</a>')
         pay_line = " &nbsp;&nbsp;|&nbsp;&nbsp; ".join(pay_parts)
 
     chip_cells = []
@@ -363,7 +374,8 @@ handled and documented, we deliver:
 Details and methodology: {DOCS_URL}
 
 - {sender_name}, NanoClone Systems Ltd.
-  You receive this because you committed to {repo}. One email; no follow-ups unless you reply.
+  You receive this because you committed to {repo}. One email, then at most two
+  short follow-ups if we don't hear back. Reply STOP and they cease immediately.
 """
     return subject, body, _email_html("remediation", lead, scan)
 
@@ -413,7 +425,8 @@ posture into a verifiable, recurring artifact:
 Baseline sample and methodology: {DOCS_URL}
 
 - {sender_name}, NanoClone Systems Ltd.
-  You receive this because you committed to {repo}. One email; no follow-ups unless you reply.
+  You receive this because you committed to {repo}. One email, then at most two
+  short follow-ups if we don't hear back. Reply STOP and they cease immediately.
 """
     return subject, body, _email_html("monitoring", lead, scan)
 
