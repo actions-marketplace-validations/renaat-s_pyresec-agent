@@ -12,14 +12,24 @@ JSON document in GCS:
                  the local follow-up engine can see production payments.
 
 Config: env SUPPRESSION_STORE=gs://<bucket>/<path>.json
-Auth on Cloud Run: default service account via ADC (no keys in code).
+
+Auth: no SDK, no keys in code.
+  on Cloud Run : metadata-server access token of the default service
+                 account (ADC equivalent), refreshed per call.
+  elsewhere    : gcloud Application Default Credentials are NOT used —
+                 local engines read via GET /v1/pipeline/state instead.
 """
 
 import json
 import os
 from datetime import datetime, timezone
+from urllib.parse import quote
+
+import httpx
 
 _DEFAULT = {"suppressions": [], "paid": []}
+_METADATA = "http://metadata.google.internal/computeMetadata/v1"
+_TOKEN_URL = f"{_METADATA}/instance/service-accounts/default/token"
 
 
 def store_path() -> str:
@@ -30,45 +40,67 @@ def configured() -> bool:
     return store_path().startswith("gs://")
 
 
-def _blob():
+def _parse_store() -> tuple[str, str]:
     if not configured():
         raise RuntimeError("SUPPRESSION_STORE not configured (gs://...)")
-    from google.cloud import storage  # lazy — only needed server-side
     raw = store_path()[len("gs://"):]
     bucket_name, _, blob_name = raw.partition("/")
     if not bucket_name or not blob_name:
         raise RuntimeError(f"malformed SUPPRESSION_STORE: {store_path()}")
-    client = storage.Client()
-    return client.bucket(bucket_name).blob(blob_name)
+    return bucket_name, blob_name
+
+
+def _access_token() -> str:
+    """Token from the Cloud Run metadata server (works only on GCP)."""
+    r = httpx.get(_TOKEN_URL, headers={"Metadata-Flavor": "Google"}, timeout=3.0)
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+
+def _request(method: str, params: str = "", data: bytes | None = None,
+             content_type: str = "application/json") -> httpx.Response:
+    bucket, blob = _parse_store()
+    if method == "POST":  # simple upload endpoint, not the resource path
+        url = (f"https://storage.googleapis.com/upload/storage/v1/b/{bucket}/o"
+               f"?uploadType=media&name={quote(blob, safe='')}")
+    else:
+        url = (f"https://storage.googleapis.com/storage/v1/b/{bucket}/o/"
+               f"{quote(blob, safe='')}{params}")
+    headers = {"Authorization": f"Bearer {_access_token()}"}
+    kwargs = {"headers": headers, "timeout": 10.0}
+    if data is not None:
+        kwargs["content"] = data
+        kwargs["headers"] = {**headers, "Content-Type": content_type}
+    return httpx.request(method, url, **kwargs)
 
 
 def load() -> dict:
-    """Read the store; missing file -> defaults (never raises for 404)."""
+    """Read the store; missing file -> defaults (never raises for readers)."""
     if not configured():
         return json.loads(json.dumps(_DEFAULT))
     try:
-        blob = _blob()
-        if not blob.exists():
+        resp = _request("GET", params="?alt=media")
+        if resp.status_code == 404:
             return json.loads(json.dumps(_DEFAULT))
-        data = json.loads(blob.download_as_text(encoding="utf-8"))
+        resp.raise_for_status()
+        data = resp.json()
         data.setdefault("suppressions", [])
         data.setdefault("paid", [])
         return data
     except Exception:
-        # Fail open for readers; writers re-raise via save().
         return json.loads(json.dumps(_DEFAULT))
 
 
 def save(data: dict) -> None:
-    blob = _blob()
     data.setdefault("suppressions", [])
     data.setdefault("paid", [])
-    blob.upload_from_string(json.dumps(data, indent=2, ensure_ascii=False),
-                            content_type="application/json")
+    payload = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
+    resp = _request("POST", data=payload)
+    resp.raise_for_status()
 
 
 def add_suppression(email: str, reason: str, note: str = "") -> dict | None:
-    """Idempotent by (email, reason) — Stripe/Resend retry deliveries."""
+    """Idempotent by (email, reason) — Resend retries deliveries."""
     email = (email or "").strip().lower()
     if not email:
         return None
