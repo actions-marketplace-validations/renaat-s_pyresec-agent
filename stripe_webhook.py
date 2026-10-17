@@ -133,7 +133,7 @@ def send_notifications(event: dict) -> dict:
 
     Runs in a FastAPI BackgroundTask so the webhook returns quickly.
     """
-    etype, obj, metadata, ref, amount, _, _ = _extract_event(event)
+    etype, obj, metadata, ref, amount, currency, lead = _extract_event(event)
     model = _infer_model(amount, metadata)
 
     customer_email = ""
@@ -154,6 +154,15 @@ def send_notifications(event: dict) -> dict:
         f"Email: {customer_email or 'n/a'}\n"
         f"Event: {etype}"
     )
+
+    # Mirror to the shared store so the local follow-up engine stops
+    # nudging leads who already paid via the Stripe link.
+    try:
+        import cloud_store
+        if cloud_store.configured():
+            cloud_store.add_paid(ref, lead, model, amount)
+    except Exception:
+        pass  # never fail notifications on store sync
 
     return {"model": model, "amount": amount, "ref": ref, "email": customer_email}
 

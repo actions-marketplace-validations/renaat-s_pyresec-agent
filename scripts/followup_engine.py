@@ -113,6 +113,52 @@ def paid_repos() -> set[str]:
     }
 
 
+def fetch_pipeline_state() -> dict | None:
+    """Pull shared state from production (cloud_store via /v1/pipeline/state).
+
+    Returns {"suppressions": [...], "paid": [...]} or None when the endpoint
+    is unreachable / unconfigured — callers fail open with a warning so a
+    production blip never silently kills the whole sequence.
+    """
+    base = os.getenv("PRODUCTION_URL",
+                     "https://pyresec-agent-519576377065.us-central1.run.app").rstrip("/")
+    token = os.getenv("PIPELINE_TOKEN", "").strip()
+    if not token:
+        print("  [WARN] PIPELINE_TOKEN not set — running without suppression sync")
+        return None
+    try:
+        r = httpx.get(f"{base}/v1/pipeline/state",
+                      headers={"X-Pipeline-Token": token}, timeout=8.0)
+        if r.status_code != 200:
+            print(f"  [WARN] pipeline state HTTP {r.status_code} — failing open")
+            return None
+        return r.json()
+    except Exception as exc:
+        print(f"  [WARN] pipeline state unreachable ({exc}) — failing open")
+        return None
+
+
+def suppressed_emails(state: dict | None) -> set[str]:
+    if not state:
+        return set()
+    return {
+        (item.get("email") or "").strip().lower()
+        for item in state.get("suppressions", [])
+        if item.get("email")
+    }
+
+
+def cloud_paid_leads(state: dict | None) -> set[str]:
+    """Repos/leads the production Stripe webhook has recorded as paid."""
+    if not state:
+        return set()
+    return {
+        (item.get("lead") or "").strip().lower()
+        for item in state.get("paid", [])
+        if item.get("lead")
+    }
+
+
 # ==================== EMAIL CONTENT ====================
 
 def _branded_html(title: str, paragraphs: list[str]) -> str:
@@ -298,9 +344,15 @@ def run(dry_run: bool = False) -> dict:
     state = load_state()
     leads = collect_sent_leads()
     paid = paid_repos()
+    pipeline = fetch_pipeline_state()
+    paid |= cloud_paid_leads(pipeline)
+    suppressed = suppressed_emails(pipeline)
 
     summary = {"timestamp": now.isoformat(), "dry_run": dry_run,
-               "leads_considered": len(leads), "sent": [], "skipped": {"paid": 0, "not_due": 0, "done": 0}}
+               "leads_considered": len(leads),
+               "suppression_sync": pipeline is not None,
+               "sent": [], "skipped": {"paid": 0, "not_due": 0, "done": 0,
+                                       "suppressed": 0}}
 
     for lead in leads:
         repo = (lead["repo"] or "").strip()
@@ -309,6 +361,9 @@ def run(dry_run: bool = False) -> dict:
             continue
         if key in paid:
             summary["skipped"]["paid"] += 1
+            continue
+        if (lead["to"] or "").strip().lower() in suppressed:
+            summary["skipped"]["suppressed"] += 1
             continue
 
         age = now - lead["sent_at"]
