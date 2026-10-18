@@ -1,0 +1,134 @@
+[
+  {
+    "timestamp": "2026-10-12T13:09:28.586911+00:00",
+    "dry_run": true,
+    "max_repos": 10,
+    "icp_min_score": 55,
+    "searches": 18,
+    "qualified": 0,
+    "sent_or_queued": 0,
+    "skipped": {
+      "seen": 17,
+      "user": 67,
+      "fork": 0,
+      "archived": 0,
+      "icp": 7,
+      "no_contact": 0,
+      "no_code": 5,
+      "clean": 0
+    },
+    "skipped_total": 96,
+    "seen_total": 1743,
+    "batch_queued": false
+  },
+  {
+    "timestamp": "2026-10-12T13:12:58.320020+00:00",
+    "dry_run": true,
+    "max_repos": 10,
+    "icp_min_score": 45,
+    "searches": 18,
+    "qualified": 0,
+    "sent_or_queued": 0,
+    "skipped": {
+      "seen": 17,
+      "user": 67,
+      "fork": 0,
+      "archived": 0,
+      "icp": 4,
+      "no_contact": 0,
+      "no_code": 8,
+      "clean": 0
+    },
+    "skipped_total": 96,
+    "seen_total": 1743,
+    "batch_queued": false
+  },
+  {
+    "timestamp": "2026-10-13T11:25:41.311738+00:00",
+    "dry_run": false,
+    "max_repos": 20,
+    "icp_min_score": 45,
+    "searches": 18,
+    "qualified": 0,
+    "sent_or_queued": 0,
+    "skipped": {
+      "seen": 17,
+      "user": 70,
+      "fork": 0,
+      "archived": 0,
+      "icp": 5,
+      "no_contact": 0,
+      "no_code": 8,
+      "clean": 0
+    },
+    "skipped_total": 100,
+    "seen_total": 1747,
+    "batch_queued": false
+  },
+  {
+    "timestamp": "2026-10-15T18:33:23.676137+00:00",
+    "dry_run": false,
+    "max_repos": 20,
+    "icp_min_score": 45,
+    "searches": 18,
+    "qualified": 0,
+    "sent_or_queued": 0,
+    "skipped": {
+      "seen": 73,
+      "user": 22,
+      "fork": 0,
+      "archived": 0,
+      "icp": 1,
+      "no_contact": 0,
+      "no_code": 2,
+      "clean": 0
+    },
+    "skipped_total": 98,
+    "seen_total": 1883,
+    "batch_queued": false
+  },
+  {
+    "timestamp": "2026-10-16T17:59:57.258500+00:00",
+    "dry_run": false,
+    "max_repos": 20,
+    "icp_min_score": 45,
+    "searches": 18,
+    "qualified": 0,
+    "sent_or_queued": 0,
+    "skipped": {
+      "seen": 68,
+      "user": 35,
+      "fork": 0,
+      "archived": 0,
+      "icp": 1,
+      "no_contact": 0,
+      "no_code": 2,
+      "clean": 0
+    },
+    "skipped_total": 106,
+    "seen_total": 2194,
+    "batch_queued": false
+  },
+  {
+    "timestamp": "2026-10-17T10:55:23.106208+00:00",
+    "dry_run": false,
+    "max_repos": 20,
+    "icp_min_score": 45,
+    "searches": 18,
+    "qualified": 0,
+    "sent_or_queued": 0,
+    "skipped": {
+      "seen": 53,
+      "user": 45,
+      "fork": 0,
+      "archived": 0,
+      "icp": 1,
+      "no_contact": 0,
+      "no_code": 2,
+      "clean": 0
+    },
+    "skipped_total": 101,
+    "seen_total": 2390,
+    "batch_queued": false
+  }
+]

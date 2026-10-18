@@ -197,11 +197,11 @@ async def services_page():
     html = html.replace(
         "{{STRIPE_REMEDIATION}}",
         stripe_remediation or
-        "mailto:pyresec@nanoclonesystems.com?subject=Proof-Led%20Remediation%20Engagement")
+        "mailto:info@nanoclonesystems.com?subject=Proof-Led%20Remediation%20Engagement")
     html = html.replace(
         "{{STRIPE_RETAINER}}",
         stripe_retainer or
-        "mailto:pyresec@nanoclonesystems.com?subject=Monitoring%20Retainer")
+        "mailto:info@nanoclonesystems.com?subject=Monitoring%20Retainer")
     calendly = os.getenv("CALENDLY_URL", "").strip()
     html = html.replace("{{CALENDLY_URL}}", calendly)
     return HTMLResponse(content=html)
@@ -388,7 +388,7 @@ async def billing_portal(email: str = "", redirect: bool = True):
                 "status": "unavailable",
                 "message": "Self-serve portal is not configured yet.",
                 "cancel_url": f"{BASE_URL}/cancel-monitoring",
-                "fallback_email": "pyresec@nanoclonesystems.com",
+                "fallback_email": "info@nanoclonesystems.com",
                 "fallback_subject": "CANCEL MONITORING",
             }
         )
@@ -410,7 +410,7 @@ async def billing_portal(email: str = "", redirect: bool = True):
                         "status": "not_found",
                         "message": "No active Stripe subscription found for that email.",
                         "cancel_url": f"{BASE_URL}/cancel-monitoring",
-                        "fallback_email": "pyresec@nanoclonesystems.com",
+                        "fallback_email": "info@nanoclonesystems.com",
                         "fallback_subject": "CANCEL MONITORING",
                     }
                 )

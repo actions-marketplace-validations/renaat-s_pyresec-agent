@@ -1,0 +1,258 @@
+[
+  {
+    "timestamp": "2026-10-12T20:57:17.517578+00:00",
+    "to": "github@li.finance",
+    "subject": "lifinance/contracts: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-12T20:57:18.290073+00:00",
+    "to": "security@lido.fi",
+    "subject": "lidofinance/staking-modules: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-12T20:57:19.234212+00:00",
+    "to": "info@sireto.com",
+    "subject": "sireto/custom-domain: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-12T20:57:20.168144+00:00",
+    "to": "info@innerluxes.dev",
+    "subject": "INNERLUXES/solidity-pattern-check: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-12T20:57:21.090949+00:00",
+    "to": "admin@rigoblock.com",
+    "subject": "RigoBlock/v3-contracts: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-12T20:57:21.846616+00:00",
+    "to": "nick@perfectabstractions.com",
+    "subject": "Perfect-Abstractions/Compose: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-12T20:57:22.774511+00:00",
+    "to": "security@particlecs.com",
+    "subject": "PracticalParticle/Bloxchain-Protocol: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-12T20:57:23.694182+00:00",
+    "to": "security@soulboundsecurity.io",
+    "subject": "SoulboundSecurity/sbf-protocol: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-12T20:57:24.642330+00:00",
+    "to": "hello@apitally.io",
+    "subject": "apitally/apitally-js: security baseline ready (weekly monitoring available)",
+    "source": "git_scraper",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-13T19:41:44.539817+00:00",
+    "to": "renaat.sibanda23@gmail.com",
+    "subject": "[REVIEW] acme-dao/contracts: security baseline ready (weekly monitoring available)",
+    "source": "notify.alert",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-13T20:28:03.741060+00:00",
+    "to": "luv@pythai.net",
+    "subject": "SHAMBA-LUV/luv-locker: security baseline ready (weekly monitoring available)",
+    "source": "notify.alert",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:19.415001+00:00",
+    "to": "security@umaproject.org",
+    "subject": "Re: UMAprotocol/protocol: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:19.854309+00:00",
+    "to": "github@li.finance",
+    "subject": "Re: lifinance/contracts: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:20.143187+00:00",
+    "to": "security@lido.fi",
+    "subject": "Re: lidofinance/staking-modules: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:20.380568+00:00",
+    "to": "info@sireto.com",
+    "subject": "Re: sireto/custom-domain: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:20.669820+00:00",
+    "to": "info@innerluxes.dev",
+    "subject": "Re: INNERLUXES/solidity-pattern-check: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:21.297382+00:00",
+    "to": "admin@rigoblock.com",
+    "subject": "Re: RigoBlock/v3-contracts: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:21.554539+00:00",
+    "to": "nick@perfectabstractions.com",
+    "subject": "Re: Perfect-Abstractions/Compose: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:21.828529+00:00",
+    "to": "security@particlecs.com",
+    "subject": "Re: PracticalParticle/Bloxchain-Protocol: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:22.061306+00:00",
+    "to": "security@soulboundsecurity.io",
+    "subject": "Re: SoulboundSecurity/sbf-protocol: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-15T18:31:22.294508+00:00",
+    "to": "hello@apitally.io",
+    "subject": "Re: apitally/apitally-js: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:54.992267+00:00",
+    "to": "security@umaproject.org",
+    "subject": "Re: UMAprotocol/protocol: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:55.236991+00:00",
+    "to": "github@li.finance",
+    "subject": "Re: lifinance/contracts: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:55.492488+00:00",
+    "to": "security@lido.fi",
+    "subject": "Re: lidofinance/staking-modules: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:55.714720+00:00",
+    "to": "info@sireto.com",
+    "subject": "Re: sireto/custom-domain: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:56.023965+00:00",
+    "to": "info@innerluxes.dev",
+    "subject": "Re: INNERLUXES/solidity-pattern-check: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:56.259345+00:00",
+    "to": "admin@rigoblock.com",
+    "subject": "Re: RigoBlock/v3-contracts: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:56.496321+00:00",
+    "to": "nick@perfectabstractions.com",
+    "subject": "Re: Perfect-Abstractions/Compose: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:56.715266+00:00",
+    "to": "security@particlecs.com",
+    "subject": "Re: PracticalParticle/Bloxchain-Protocol: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-16T17:57:56.980032+00:00",
+    "to": "luv@pythai.net",
+    "subject": "Re: SHAMBA-LUV/luv-locker: security baseline ready (weekly monitoring available)",
+    "source": "followup_engine.stage1",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-17T16:13:24.475225+00:00",
+    "to": "security@soulboundsecurity.io",
+    "subject": "Re: SoulboundSecurity/sbf-protocol: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "timestamp": "2026-10-17T16:13:24.698108+00:00",
+    "to": "hello@apitally.io",
+    "subject": "Re: apitally/apitally-js: security baseline ready (weekly monitoring available) — endpoint hardening checklist",
+    "source": "followup_engine.stage2",
+    "status": "success",
+    "error": ""
+  }
+]

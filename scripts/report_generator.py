@@ -471,7 +471,7 @@ if __name__ == "__main__":
         "client": "acme-dao",
         "repo_url": "https://github.com/acme-dao/contracts",
         "engagement": "Security Assessment & Remediation",
-        "contact": "security@nanoclonesystems.com",
+        "contact": "info@nanoclonesystems.com",
         "upsell": "Given the critical findings above, we recommend activating continuous "
                   "monitoring before shipping further changes.",
     }

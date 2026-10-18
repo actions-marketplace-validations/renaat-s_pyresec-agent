@@ -1,0 +1,300 @@
+[
+  {
+    "timestamp": "2026-10-14T18:56:14.067508+00:00",
+    "dry_run": true,
+    "leads_considered": 11,
+    "sent": [
+      {
+        "stage": 1,
+        "to": "security@umaproject.org",
+        "repo": "UMAprotocol/protocol",
+        "dry": true
+      },
+      {
+        "stage": 1,
+        "to": "github@li.finance",
+        "repo": "lifinance/contracts",
+        "dry": true
+      },
+      {
+        "stage": 1,
+        "to": "security@lido.fi",
+        "repo": "lidofinance/staking-modules",
+        "dry": true
+      },
+      {
+        "stage": 1,
+        "to": "info@sireto.com",
+        "repo": "sireto/custom-domain",
+        "dry": true
+      },
+      {
+        "stage": 1,
+        "to": "info@innerluxes.dev",
+        "repo": "INNERLUXES/solidity-pattern-check",
+        "dry": true
+      },
+      {
+        "stage": 1,
+        "to": "admin@rigoblock.com",
+        "repo": "RigoBlock/v3-contracts",
+        "dry": true
+      },
+      {
+        "stage": 1,
+        "to": "nick@perfectabstractions.com",
+        "repo": "Perfect-Abstractions/Compose",
+        "dry": true
+      },
+      {
+        "stage": 1,
+        "to": "security@particlecs.com",
+        "repo": "PracticalParticle/Bloxchain-Protocol",
+        "dry": true
+      },
+      {
+        "stage": 1,
+        "to": "security@soulboundsecurity.io",
+        "repo": "SoulboundSecurity/sbf-protocol",
+        "dry": true
+      }
+    ],
+    "skipped": {
+      "paid": 0,
+      "not_due": 4,
+      "done": 0
+    }
+  },
+  {
+    "timestamp": "2026-10-15T18:31:18.777868+00:00",
+    "dry_run": false,
+    "leads_considered": 11,
+    "sent": [
+      {
+        "stage": 1,
+        "to": "security@umaproject.org",
+        "repo": "UMAprotocol/protocol"
+      },
+      {
+        "stage": 1,
+        "to": "github@li.finance",
+        "repo": "lifinance/contracts"
+      },
+      {
+        "stage": 1,
+        "to": "security@lido.fi",
+        "repo": "lidofinance/staking-modules"
+      },
+      {
+        "stage": 1,
+        "to": "info@sireto.com",
+        "repo": "sireto/custom-domain"
+      },
+      {
+        "stage": 1,
+        "to": "info@innerluxes.dev",
+        "repo": "INNERLUXES/solidity-pattern-check"
+      },
+      {
+        "stage": 1,
+        "to": "admin@rigoblock.com",
+        "repo": "RigoBlock/v3-contracts"
+      },
+      {
+        "stage": 1,
+        "to": "nick@perfectabstractions.com",
+        "repo": "Perfect-Abstractions/Compose"
+      },
+      {
+        "stage": 1,
+        "to": "security@particlecs.com",
+        "repo": "PracticalParticle/Bloxchain-Protocol"
+      },
+      {
+        "stage": 1,
+        "to": "security@soulboundsecurity.io",
+        "repo": "SoulboundSecurity/sbf-protocol"
+      },
+      {
+        "stage": 1,
+        "to": "hello@apitally.io",
+        "repo": "apitally/apitally-js"
+      }
+    ],
+    "skipped": {
+      "paid": 0,
+      "not_due": 2,
+      "done": 0
+    }
+  },
+  {
+    "timestamp": "2026-10-16T17:57:54.517739+00:00",
+    "dry_run": false,
+    "leads_considered": 11,
+    "sent": [
+      {
+        "stage": 2,
+        "to": "security@umaproject.org",
+        "repo": "UMAprotocol/protocol"
+      },
+      {
+        "stage": 2,
+        "to": "github@li.finance",
+        "repo": "lifinance/contracts"
+      },
+      {
+        "stage": 2,
+        "to": "security@lido.fi",
+        "repo": "lidofinance/staking-modules"
+      },
+      {
+        "stage": 2,
+        "to": "info@sireto.com",
+        "repo": "sireto/custom-domain"
+      },
+      {
+        "stage": 2,
+        "to": "info@innerluxes.dev",
+        "repo": "INNERLUXES/solidity-pattern-check"
+      },
+      {
+        "stage": 2,
+        "to": "admin@rigoblock.com",
+        "repo": "RigoBlock/v3-contracts"
+      },
+      {
+        "stage": 2,
+        "to": "nick@perfectabstractions.com",
+        "repo": "Perfect-Abstractions/Compose"
+      },
+      {
+        "stage": 2,
+        "to": "security@particlecs.com",
+        "repo": "PracticalParticle/Bloxchain-Protocol"
+      },
+      {
+        "stage": 1,
+        "to": "luv@pythai.net",
+        "repo": "SHAMBA-LUV/luv-locker"
+      }
+    ],
+    "skipped": {
+      "paid": 0,
+      "not_due": 2,
+      "done": 8
+    }
+  },
+  {
+    "timestamp": "2026-10-17T10:54:19.007780+00:00",
+    "dry_run": false,
+    "leads_considered": 11,
+    "sent": [],
+    "skipped": {
+      "paid": 0,
+      "not_due": 3,
+      "done": 8
+    }
+  },
+  {
+    "timestamp": "2026-10-17T14:10:45.535645+00:00",
+    "dry_run": true,
+    "leads_considered": 11,
+    "suppression_sync": false,
+    "sent": [],
+    "skipped": {
+      "paid": 0,
+      "not_due": 3,
+      "done": 8,
+      "suppressed": 0
+    }
+  },
+  {
+    "timestamp": "2026-10-17T14:10:46.224345+00:00",
+    "dry_run": true,
+    "leads_considered": 11,
+    "suppression_sync": false,
+    "sent": [],
+    "skipped": {
+      "paid": 0,
+      "not_due": 3,
+      "done": 8,
+      "suppressed": 0
+    }
+  },
+  {
+    "timestamp": "2026-10-17T15:58:28.209561+00:00",
+    "dry_run": true,
+    "leads_considered": 11,
+    "suppression_sync": true,
+    "sent": [],
+    "skipped": {
+      "paid": 0,
+      "not_due": 3,
+      "done": 8,
+      "suppressed": 0
+    }
+  },
+  {
+    "timestamp": "2026-10-17T15:58:29.481787+00:00",
+    "dry_run": true,
+    "leads_considered": 11,
+    "suppression_sync": true,
+    "sent": [],
+    "skipped": {
+      "paid": 0,
+      "not_due": 3,
+      "done": 8,
+      "suppressed": 0
+    }
+  },
+  {
+    "timestamp": "2026-10-17T16:12:48.432491+00:00",
+    "dry_run": true,
+    "leads_considered": 11,
+    "suppression_sync": true,
+    "sent": [
+      {
+        "stage": 2,
+        "to": "security@soulboundsecurity.io",
+        "repo": "SoulboundSecurity/sbf-protocol",
+        "dry": true
+      },
+      {
+        "stage": 2,
+        "to": "hello@apitally.io",
+        "repo": "apitally/apitally-js",
+        "dry": true
+      }
+    ],
+    "skipped": {
+      "paid": 0,
+      "not_due": 0,
+      "done": 0,
+      "suppressed": 0
+    }
+  },
+  {
+    "timestamp": "2026-10-17T16:13:23.922839+00:00",
+    "dry_run": false,
+    "leads_considered": 11,
+    "suppression_sync": true,
+    "sent": [
+      {
+        "stage": 2,
+        "to": "security@soulboundsecurity.io",
+        "repo": "SoulboundSecurity/sbf-protocol"
+      },
+      {
+        "stage": 2,
+        "to": "hello@apitally.io",
+        "repo": "apitally/apitally-js"
+      }
+    ],
+    "skipped": {
+      "paid": 0,
+      "not_due": 0,
+      "done": 2,
+      "suppressed": 0
+    }
+  }
+]
