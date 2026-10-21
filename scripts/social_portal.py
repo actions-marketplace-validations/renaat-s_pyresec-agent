@@ -116,6 +116,9 @@ td .mono{font-family:var(--font-mono);font-size:.75rem}
 .mode-copy{color:var(--warn);font-family:var(--font-mono);font-size:.68rem}
 .section-label{font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);letter-spacing:.16em;
   text-transform:uppercase;margin:1.25rem 0 .5rem;display:flex;justify-content:space-between}
+.section-label.x{color:#3b82f6}
+.section-label.fc{color:#a855f7}
+.section-label.li{color:#eab308}
 .tweet{border:var(--glass-border);background:var(--glass-high);border-radius:12px;padding:.9rem 1rem;margin-bottom:.55rem}
 .tweet .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
 .tweet .num{font-family:var(--font-mono);font-size:.68rem;color:var(--brand-red)}
@@ -221,17 +224,17 @@ async function openCard(qid){
       <tr><td class="mono">LinkedIn</td><td class="mono">Renaat Sibanda · NanoClone</td>
         <td class="mode-copy">COPY-PASTE</td><td class="mono">founder post</td></tr>
     </table>
-    <div class="section-label"><span>X Thread</span><span>${tchars} chars total</span></div>
+    <div class="section-label x"><span>✕ X / Twitter Thread</span><span>${tchars} chars total</span></div>
     ${tweets.map((t,i)=>`<div class="tweet"><div class="head">
         <span class="num">TWEET ${i+1}/${tweets.length}</span>
         <span class="count ${t.length>280?'over':''}">${t.length}/280</span></div>
       <pre>${esc(t)}</pre>
       <div class="btns"><button onclick="copyText(this.previousElementSibling.textContent,this)">COPY</button></div>
     </div>`).join('')}
-    <div class="section-label"><span>Farcaster cast</span><span>${fbytes}/1024 bytes</span></div>
+    <div class="section-label fc"><span>◈ Farcaster cast</span><span>${fbytes}/1024 bytes</span></div>
     <div class="tweet cast"><pre>${esc(draft.farcaster||'')}</pre>
       <div class="btns"><button onclick="copyText(this.previousElementSibling.textContent,this)">COPY</button></div></div>
-    <div class="section-label"><span>LinkedIn post</span><span>${(draft.linkedin||'').length} chars</span></div>
+    <div class="section-label li"><span>in LinkedIn post</span><span>${(draft.linkedin||'').length} chars</span></div>
     <div class="tweet li"><pre>${esc(draft.linkedin||'')}</pre>
       <div class="btns"><button onclick="copyText(this.previousElementSibling.textContent,this)">COPY</button></div></div>
     ${d.result ? `<div class="result ${d.result.status==='posted'?'':'err'}">
