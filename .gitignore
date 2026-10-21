@@ -36,5 +36,7 @@ scripts/.outreach_runs.json
 scripts/.remediation_runs.json
 scripts/.email_audit.json
 scripts/.shadow_audit_state.json
+scripts/.social_scanner.heartbeat
+scripts/.social_portal.log
 reports/
 reports/monitoring_delta_*.md

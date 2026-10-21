@@ -38,11 +38,14 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-# Windows console: allow emoji/unicode in posts (CMD defaults to cp1252)
-if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
+# Windows console: allow emoji/unicode in posts (CMD defaults to cp1252).
+# Under pythonw (GUI/portal) sys.stdout is None — guard before touching it.
+if sys.stdout is not None and sys.stdout.encoding and \
+        sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    if sys.stderr is not None:
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 import httpx
 
@@ -684,17 +687,8 @@ def handle_telegram_updates(updates: list[dict], verbose: bool = True) -> int:
             telegram_app.answer_callback(cb_id, "Publishing...")
             import social_pipeline
             draft = entry.get("draft") or {}
-            errors = []
-            cast_url = ""
-            try:
-                results = social_pipeline.post_farcaster_thread(
-                    draft.get("farcaster", ""), channels=["security"])
-                cast_url = (results[-1].get("url", "") if results else "")
-            except Exception as e:
-                errors.append(f"Farcaster: {e}")
-                if verbose:
-                    print(f"  [TG ERROR] social farcaster: {e}")
-            # Deliver X thread + LinkedIn as plain texts for copy-paste
+            result = social_pipeline.publish_approved(entry)
+            errors = list(result["errors"])
             try:
                 tweets = draft.get("x_thread", [])
                 for i, tweet in enumerate(tweets, 1):
@@ -705,10 +699,9 @@ def handle_telegram_updates(updates: list[dict], verbose: bool = True) -> int:
                         f"📄 LinkedIn post — copy & paste:\n\n{draft['linkedin']}")
             except Exception as e:
                 errors.append(f"delivery: {e}")
-            entry["status"] = "posted" if not errors else "error"
-            entry["cast_url"] = cast_url
-            if errors:
+                entry["status"] = "error"
                 entry["error"] = "; ".join(errors)
+            cast_url = entry.get("cast_url", "")
             if tg_msg:
                 if errors:
                     telegram_app.edit_message(
@@ -918,6 +911,13 @@ def run_daemon(platforms: list[str], dry_run: bool = False):
 
     while True:
         try:
+            # Heartbeat for the Social Deck portal liveness pill
+            try:
+                with open("scripts/.social_scanner.heartbeat", "w") as hf:
+                    hf.write(datetime.now(timezone.utc).isoformat())
+            except OSError:
+                pass
+
             # --- Telegram approvals first (picks up taps within 25s) ---
             if tg_enabled:
                 updates = telegram_app.get_updates(offset, timeout=25)
