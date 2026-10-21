@@ -329,6 +329,28 @@ def queue_for_telegram(draft: dict, verbose: bool = True) -> str:
     return qid
 
 
+def publish_approved(entry: dict) -> dict:
+    """Publish an approved social_post queue entry.
+
+    Shared by the Telegram daemon and the Social Deck portal:
+    auto-posts the Farcaster cast (channel: security), marks the entry
+    posted/error in place. Returns {"status", "cast_url", "errors"}.
+    """
+    draft = entry.get("draft") or {}
+    errors: list[str] = []
+    cast_url = ""
+    try:
+        results = post_farcaster_thread(draft.get("farcaster", ""),
+                                        channels=["security"])
+        cast_url = (results[-1].get("url", "") if results else "")
+    except Exception as e:
+        errors.append(f"Farcaster: {e}")
+    entry["status"] = "posted" if not errors else "error"
+    entry["cast_url"] = cast_url
+    entry["error"] = "; ".join(errors)
+    return {"status": entry["status"], "cast_url": cast_url, "errors": errors}
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="PYRESEC Social Pipeline")
     p.add_argument("--case", default="", help="case-study slug substring")
