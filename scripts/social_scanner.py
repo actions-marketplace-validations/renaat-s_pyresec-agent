@@ -682,8 +682,8 @@ def handle_telegram_updates(updates: list[dict], verbose: bool = True) -> int:
             handled += 1
             continue
 
-        # === APPROVE → publish social post bundle (Phase 2 content) ===
-        if kind == "social_post":
+        # === APPROVE → publish social post bundle (Zero-Day / Code Drop) ===
+        if kind in ("social_post", "buildinpublic"):
             telegram_app.answer_callback(cb_id, "Publishing...")
             import social_pipeline
             draft = entry.get("draft") or {}
