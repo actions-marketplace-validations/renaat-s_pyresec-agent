@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 load_dotenv(ROOT / ".env")
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 import social_pipeline
 import social_scanner
@@ -65,11 +65,14 @@ body{font-family:var(--font-main);background:var(--base-950);color:var(--text-pr
 .orb-red{width:60vw;height:60vw;top:-20%;left:-15%;background:radial-gradient(circle,rgba(220,38,38,.12) 0%,rgba(220,38,38,.03) 40%,transparent 70%)}
 .wrap{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:1.5rem 2rem 3rem}
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem}
-.brand{display:flex;align-items:center;gap:.85rem}
-.logo{width:44px;height:44px;border-radius:10px;background:var(--base-900);border:var(--glass-border);
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
-  font-family:var(--font-mono);color:var(--brand-red);font-size:9px;font-weight:700;letter-spacing:.5px}
-.logo .ring{width:10px;height:10px;border:2px solid var(--brand-red);border-radius:50%;margin-bottom:2px}
+.brand{display:flex;align-items:center;gap:.9rem}
+.logo{height:52px;width:auto;border-radius:10px;
+  filter:drop-shadow(0 0 7px rgba(220,38,38,.85)) drop-shadow(0 0 18px rgba(220,38,38,.4));
+  animation:logoGlow 3.2s ease-in-out infinite}
+@keyframes logoGlow{
+  0%,100%{filter:drop-shadow(0 0 7px rgba(220,38,38,.85)) drop-shadow(0 0 18px rgba(220,38,38,.4))}
+  50%{filter:drop-shadow(0 0 12px rgba(220,38,38,1)) drop-shadow(0 0 28px rgba(220,38,38,.65))}
+}
 h1{font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
 h1 span{color:var(--brand-red)}
 .sub{font-family:var(--font-mono);font-size:.68rem;color:var(--text-muted);letter-spacing:.18em;text-transform:uppercase}
@@ -148,7 +151,7 @@ button:hover{border-color:rgba(255,255,255,.2);color:#fff}
 <div class="wrap">
   <header>
     <div class="brand">
-      <div class="logo"><div class="ring"></div>PYRESEC</div>
+      <img class="logo" src="/assets/pyresec-icon.png" alt="PYRESEC">
       <div><h1>PYRESEC <span>Social Deck</span></h1>
       <div class="sub">Zero-Day Breakdown · approval console</div></div>
     </div>
@@ -269,6 +272,11 @@ refresh(); setInterval(refresh, 10000);
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
     return PAGE
+
+
+@app.get("/assets/pyresec-icon.png")
+def asset_icon() -> FileResponse:
+    return FileResponse(ROOT / "assets" / "pyresec-icon.png")
 
 
 @app.get("/api/state")
