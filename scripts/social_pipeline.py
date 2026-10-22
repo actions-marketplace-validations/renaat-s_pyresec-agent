@@ -292,24 +292,33 @@ def post_farcaster_thread(text: str, channels: list[str] | None = None) -> list[
     return results
 
 
-def queue_for_telegram(draft: dict, verbose: bool = True) -> str:
+def queue_for_telegram(draft: dict, verbose: bool = True,
+                       kind: str = "social_post") -> str:
     """Send an approval card to Telegram; entry waits in the shared queue.
 
     The running social_scanner daemon handles the Approve tap: publishes the
     Farcaster cast and delivers the X thread + LinkedIn texts for copy-paste.
+    kind: "social_post" (Zero-Day Breakdown) or "buildinpublic" (Code Drop).
     """
     import time
     import social_scanner
     import telegram_app
 
-    qid = f"{int(time.time() * 1000)}-social"
+    qid = f"{int(time.time() * 1000)}-{kind.replace('_', '-')}"
     tweets = draft.get("x_thread", [])
     preview = (tweets[0] if tweets else draft.get("farcaster", ""))[:600]
-    header = (
-        f"📱 Social drafts ready — {draft['slug']} ({draft['rating']})\n"
-        f"On approve: Farcaster auto-post (/security) + X thread & LinkedIn "
-        f"texts delivered here for copy-paste."
-    )
+    if kind == "buildinpublic":
+        header = (
+            f"🧠 Build in Public draft — {draft['slug']}\n"
+            f"On approve: Farcaster auto-post (home feed) + X thread & LinkedIn "
+            f"texts delivered here for copy-paste."
+        )
+    else:
+        header = (
+            f"📱 Social drafts ready — {draft['slug']} ({draft['rating']})\n"
+            f"On approve: Farcaster auto-post (/security) + X thread & LinkedIn "
+            f"texts delivered here for copy-paste."
+        )
     body = f"Preview (X tweet 1):\n{preview}\n\n…plus {max(len(tweets)-1, 0)} more " \
            f"tweet(s) + LinkedIn post."
     msg_id = telegram_app.send_lead(header, body, qid)
@@ -317,7 +326,7 @@ def queue_for_telegram(draft: dict, verbose: bool = True) -> str:
     queue = social_scanner.load_queue()
     queue.append({
         "qid": qid,
-        "kind": "social_post",
+        "kind": kind,
         "status": "pending",
         "tg_message_id": msg_id,
         "draft": draft,
@@ -339,9 +348,10 @@ def publish_approved(entry: dict) -> dict:
     draft = entry.get("draft") or {}
     errors: list[str] = []
     cast_url = ""
+    channels = ["security"] if entry.get("kind") == "social_post" else None
     try:
         results = post_farcaster_thread(draft.get("farcaster", ""),
-                                        channels=["security"])
+                                        channels=channels)
         cast_url = (results[-1].get("url", "") if results else "")
     except Exception as e:
         errors.append(f"Farcaster: {e}")

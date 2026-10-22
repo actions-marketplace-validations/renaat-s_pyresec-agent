@@ -99,6 +99,12 @@ h1 span{color:var(--brand-red)}
 .badge.HIGH{background:rgba(220,38,38,.15);color:#f87171;border:1px solid rgba(220,38,38,.35)}
 .badge.MEDIUM{background:rgba(217,119,6,.12);color:#fbbf24;border:1px solid rgba(217,119,6,.3)}
 .badge.LOW{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.badge.CODE{background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.35)}
+.q-group{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-muted);margin:1rem 0 .5rem;display:flex;justify-content:space-between}
+.q-group:first-child{margin-top:0}
+.q-group.zeroday{color:var(--brand-red)}
+.q-group.bip{color:#eab308}
 .badge.pending{background:rgba(255,255,255,.06);color:var(--text-secondary)}
 .badge.posted{background:rgba(34,197,94,.12);color:#4ade80}
 .badge.error{background:rgba(220,38,38,.15);color:#f87171}
@@ -116,6 +122,9 @@ td .mono{font-family:var(--font-mono);font-size:.75rem}
 .mode-copy{color:var(--warn);font-family:var(--font-mono);font-size:.68rem}
 .section-label{font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);letter-spacing:.16em;
   text-transform:uppercase;margin:1.25rem 0 .5rem;display:flex;justify-content:space-between}
+.section-label.x{color:#3b82f6}
+.section-label.fc{color:#a855f7}
+.section-label.li{color:#eab308}
 .tweet{border:var(--glass-border);background:var(--glass-high);border-radius:12px;padding:.9rem 1rem;margin-bottom:.55rem}
 .tweet .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
 .tweet .num{font-family:var(--font-mono);font-size:.68rem;color:var(--brand-red)}
@@ -191,14 +200,20 @@ async function refresh(){
       'Next bundle arrives via the weekly Shadow Audit<br>or run on demand: '+
       '<code>python scripts\\shadow_audit.py --limit 1 && python scripts\\social_pipeline.py</code></div>'; }
     else{
-      q.innerHTML = s.queue.map(item =>
-        `<div class="q-item ${current===item.qid?'active':''}" onclick="openCard('${item.qid}')">
-          <div class="row"><span class="slug">${esc(item.slug||item.qid)}</span>
-          <span class="badge ${item.rating||''}">${item.rating||'?'}</span></div>
+      const z = s.queue.filter(q=>q.kind!=='buildinpublic');
+      const b = s.queue.filter(q=>q.kind==='buildinpublic');
+      const item = it => `<div class="q-item ${current===it.qid?'active':''}" onclick="openCard('${it.qid}')">
+          <div class="row"><span class="slug">${esc(it.slug||it.qid)}</span>
+          <span class="badge ${it.rating||''}">${it.rating||'?'}</span></div>
           <div class="row" style="margin-top:.35rem">
-            <span class="meta">${(item.created_at||'').slice(0,16).replace('T',' ')}</span>
-            <span class="badge ${item.status}">${item.status.toUpperCase()}</span></div>
-        </div>`).join('');
+            <span class="meta">${(it.created_at||'').slice(0,16).replace('T',' ')}</span>
+            <span class="badge ${it.status}">${it.status.toUpperCase()}</span></div>
+        </div>`;
+      q.innerHTML =
+        `<div class="q-group zeroday"><span>◆ Zero-Day Breakdown</span><span>${z.length}</span></div>` +
+        (z.length ? z.map(item).join('') : '<div class="meta" style="font-size:.72rem;color:var(--text-muted);padding:.3rem .2rem">none in queue</div>') +
+        `<div class="q-group bip"><span>◈ Build in Public</span><span>${b.length}</span></div>` +
+        (b.length ? b.map(item).join('') : '<div class="meta" style="font-size:.72rem;color:var(--text-muted);padding:.3rem .2rem">none in queue</div>');
     }
   }catch(e){ /* daemon down or server restarting */ }
 }
@@ -210,28 +225,31 @@ async function openCard(qid){
   const tchars = tweets.reduce((a,t)=>a+t.length,0);
   const fbytes = new TextEncoder().encode(draft.farcaster||'').length;
   const locked = d.status !== 'pending';
+  const isBip = d.kind === 'buildinpublic';
+  const fcTarget = isBip ? '@renaat → home feed' : '@renaat → /security';
+  const flavor = isBip ? 'CODE DROP · BUILD IN PUBLIC' : 'ZERO-DAY BREAKDOWN';
   $('#detail').innerHTML = `
-    <h2>Pre-Flight — ${esc(draft.slug||'')}</h2>
+    <h2>Pre-Flight — ${esc(draft.slug||'')} <span style="color:${isBip?'#eab308':'var(--brand-red)'};font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;margin-left:.5rem">${flavor}</span></h2>
     <table>
       <tr><th>Channel</th><th>Account</th><th>Mode</th><th>Check</th></tr>
-      <tr><td class="mono">Farcaster</td><td class="mono">@renaat → /security</td>
+      <tr><td class="mono">Farcaster</td><td class="mono">${fcTarget}</td>
         <td class="mode-auto">AUTO</td><td class="mono">${d.farcaster_ok?'signer approved':'signer MISSING'}</td></tr>
       <tr><td class="mono">X / Twitter</td><td class="mono">@Nanoclone_S</td>
         <td class="mode-copy">COPY-PASTE</td><td class="mono">${tweets.length} tweet(s)</td></tr>
       <tr><td class="mono">LinkedIn</td><td class="mono">Renaat Sibanda · NanoClone</td>
         <td class="mode-copy">COPY-PASTE</td><td class="mono">founder post</td></tr>
     </table>
-    <div class="section-label"><span>X Thread</span><span>${tchars} chars total</span></div>
+    <div class="section-label x"><span>✕ X / Twitter Thread</span><span>${tchars} chars total</span></div>
     ${tweets.map((t,i)=>`<div class="tweet"><div class="head">
         <span class="num">TWEET ${i+1}/${tweets.length}</span>
         <span class="count ${t.length>280?'over':''}">${t.length}/280</span></div>
       <pre>${esc(t)}</pre>
       <div class="btns"><button onclick="copyText(this.previousElementSibling.textContent,this)">COPY</button></div>
     </div>`).join('')}
-    <div class="section-label"><span>Farcaster cast</span><span>${fbytes}/1024 bytes</span></div>
+    <div class="section-label fc"><span>◈ Farcaster cast</span><span>${fbytes}/1024 bytes</span></div>
     <div class="tweet cast"><pre>${esc(draft.farcaster||'')}</pre>
       <div class="btns"><button onclick="copyText(this.previousElementSibling.textContent,this)">COPY</button></div></div>
-    <div class="section-label"><span>LinkedIn post</span><span>${(draft.linkedin||'').length} chars</span></div>
+    <div class="section-label li"><span>in LinkedIn post</span><span>${(draft.linkedin||'').length} chars</span></div>
     <div class="tweet li"><pre>${esc(draft.linkedin||'')}</pre>
       <div class="btns"><button onclick="copyText(this.previousElementSibling.textContent,this)">COPY</button></div></div>
     ${d.result ? `<div class="result ${d.result.status==='posted'?'':'err'}">
@@ -298,12 +316,13 @@ def api_state() -> dict:
     except Exception:
         farcaster = {"configured": False, "fid": None}
     queue = social_scanner.load_queue()
-    social = [q for q in queue if q.get("kind") == "social_post"]
+    social = [q for q in queue if q.get("kind") in ("social_post", "buildinpublic")]
     summary = []
-    for q in reversed(social[-30:]):
+    for q in reversed(social[-40:]):
         draft = q.get("draft") or {}
         summary.append({
             "qid": q["qid"],
+            "kind": q.get("kind", "social_post"),
             "slug": draft.get("slug", q["qid"]),
             "rating": draft.get("rating", ""),
             "status": q.get("status", "pending"),
@@ -315,7 +334,8 @@ def api_state() -> dict:
 @app.get("/api/card/{qid}")
 def api_card(qid: str) -> dict:
     queue = social_scanner.load_queue()
-    entry = next((q for q in queue if q["qid"] == qid and q.get("kind") == "social_post"), None)
+    entry = next((q for q in queue
+                  if q["qid"] == qid and q.get("kind") in ("social_post", "buildinpublic")), None)
     if not entry:
         raise HTTPException(404, "queue entry not found")
     try:
@@ -325,6 +345,7 @@ def api_card(qid: str) -> dict:
         fc_ok = False
     out = {
         "qid": entry["qid"],
+        "kind": entry.get("kind", "social_post"),
         "status": entry.get("status", "pending"),
         "created_at": entry.get("created_at", ""),
         "draft": entry.get("draft") or {},
@@ -344,7 +365,8 @@ def api_card(qid: str) -> dict:
 def api_approve(qid: str) -> dict:
     with _lock:
         queue = social_scanner.load_queue()
-        entry = next((q for q in queue if q["qid"] == qid and q.get("kind") == "social_post"), None)
+        entry = next((q for q in queue
+                      if q["qid"] == qid and q.get("kind") in ("social_post", "buildinpublic")), None)
         if not entry:
             raise HTTPException(404, "queue entry not found")
         if entry.get("status") != "pending":
@@ -376,7 +398,8 @@ def api_approve(qid: str) -> dict:
 def api_reject(qid: str) -> dict:
     with _lock:
         queue = social_scanner.load_queue()
-        entry = next((q for q in queue if q["qid"] == qid and q.get("kind") == "social_post"), None)
+        entry = next((q for q in queue
+                      if q["qid"] == qid and q.get("kind") in ("social_post", "buildinpublic")), None)
         if not entry:
             raise HTTPException(404, "queue entry not found")
         if entry.get("status") != "pending":
