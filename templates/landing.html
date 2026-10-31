@@ -247,6 +247,22 @@ body {
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; animation: pulse 2s infinite; margin-right: 0.5rem; }
 
+/* SELF-SERVE LOCKDOWN */
+.lockdown-card { max-width: 640px; padding: 2rem 2.5rem; text-align: center; border-color: rgba(220,38,38,0.3); }
+.lockdown-kicker {
+  font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;
+  color: var(--brand-red); letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.lockdown-text { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.65; }
+.paused .tier-card, .paused .api-card { opacity: 0.45; pointer-events: none; filter: grayscale(0.5); }
+.paused .tier-card:hover { transform: none; box-shadow: none; }
+.paused-badge {
+  display: inline-block; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700;
+  padding: 0.35rem 0.9rem; border-radius: 100px; letter-spacing: 0.12em; text-transform: uppercase;
+  background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.3); color: var(--brand-red);
+}
+
 @media (max-width: 768px) {
   .tier-grid { grid-template-columns: 1fr; }
   .hero-stats { flex-direction: column; gap: 1.5rem; }
@@ -286,21 +302,24 @@ body {
     <div class="hero-badge"><span class="live-dot"></span> LIVE ON BASE MAINNET</div>
     <h1>AI-Powered Code<br>Security Engine</h1>
     <p class="hero-sub">Autonomous SAST, dependency auditing, and automated remediation — payable per-scan via x402 USDC micropayments on Base.</p>
-    <div class="hero-stats">
-      <div class="stat"><div class="stat-val">$0.01</div><div class="stat-label">Quick Scan</div></div>
-      <div class="stat"><div class="stat-val">$0.50</div><div class="stat-label">Deep Audit</div></div>
-      <div class="stat"><div class="stat-val">$5.00</div><div class="stat-label">Remediation</div></div>
-      <div class="stat"><div class="stat-val">3</div><div class="stat-label">Service Tiers</div></div>
+    <div class="glass-card lockdown-card">
+      <div class="lockdown-kicker">Self-Serve Tiers &mdash; Temporarily Paused</div>
+      <p class="lockdown-text">
+        PYRESEC is currently focusing on its high-ticket, proof-led security engagements &mdash;
+        full remediation and continuous monitoring &mdash; and is not offering the pay-per-scan
+        self-serve tiers at this time. The automated tiers below return soon.
+      </p>
+      <a href="/services" class="swagger-link" style="margin-top: 1rem;">View Proof-Led Security Engagements &rarr;</a>
     </div>
-    <a href="/swagger" class="swagger-link">Open Interactive API Explorer &rarr;</a>
   </div>
 </section>
 
-<section class="tiers">
+<section class="tiers paused">
   <div class="container">
     <div class="section-header">
       <h2>Service Tiers</h2>
       <p>Pay per scan. No subscriptions. No accounts. Just code in, findings out.</p>
+      <p style="margin-top: 0.75rem;"><span class="paused-badge">Temporarily Paused &mdash; see Engagements</span></p>
     </div>
     <div class="tier-grid">
       <div class="tier-card glass-card">
@@ -311,7 +330,7 @@ body {
           <li>Top 3 findings by severity</li>
           <li>CWE ID classification</li>
           <li>Line-number pinpointing</li>
-          <li>qwen/qwen3.6-27b model</li>
+          <li>qwen/qwen3.8-27b model</li>
         </ul>
         <div class="tier-endpoint">POST /v1/audit/quick-scan</div>
       </div>
@@ -344,7 +363,7 @@ body {
   </div>
 </section>
 
-<section class="api-section">
+<section class="api-section paused">
   <div class="container">
     <div class="section-header">
       <h2>Quick Start</h2>

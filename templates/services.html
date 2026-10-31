@@ -126,6 +126,16 @@ body {
 /* HERO */
 .hero { padding: 10rem 0 4rem; text-align: center; }
 .hero-content { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+.hero-logo {
+  width: 120px; height: 120px;
+  filter: drop-shadow(0 0 30px rgba(220,38,38,0.5)) drop-shadow(0 0 60px rgba(220,38,38,0.25));
+  animation: logo-glow 3s ease-in-out infinite alternate;
+  border-radius: 20px;
+}
+@keyframes logo-glow {
+  from { filter: drop-shadow(0 0 20px rgba(220,38,38,0.4)) drop-shadow(0 0 40px rgba(220,38,38,0.15)); }
+  to   { filter: drop-shadow(0 0 40px rgba(220,38,38,0.7)) drop-shadow(0 0 80px rgba(220,38,38,0.35)); }
+}
 .hero-badge {
   font-size: 0.7rem; font-weight: 700; padding: 0.4rem 1rem;
   border-radius: 100px; background: var(--base-900);
@@ -350,6 +360,7 @@ section { position: relative; z-index: 2; }
 
 <section class="hero">
   <div class="hero-content">
+    <img src="/static/pyresec.png" alt="PYRESEC" class="hero-logo">
     <div class="hero-badge"><span class="live-dot"></span> MANAGED SECURITY ENGAGEMENTS</div>
     <h1>Proof-Led Security<br>Engagements</h1>
     <p class="hero-sub">Disclosure is free. You see the evidence before you pay — then choose a one-time remediation or hands-off continuous monitoring.</p>

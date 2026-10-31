@@ -176,7 +176,9 @@ async def custom_docs():
 
 @app.get("/", include_in_schema=False)
 async def root_landing():
-    return HTMLResponse(content=_get_landing_html())
+    # /services (Proof-Led Security Engagements) is the mainline PYRESEC page;
+    # self-serve tiers remain available but paused at /docs.
+    return RedirectResponse(url="/services", status_code=302)
 
 # ==================== HIGH-TICKET SERVICES PAGE ====================
 _SERVICES_HTML = None
@@ -440,7 +442,7 @@ async def billing_portal(email: str = "", redirect: bool = True):
     "/v1/audit/quick-scan",
     tags=["Security Auditing"],
     summary="Quick Security Scan ($0.01 USDC)",
-    description="High-speed SAST scan returning top 3 security findings. Uses qwen/qwen3.6-27b."
+    description="High-speed SAST scan returning top 3 security findings. Uses qwen/qwen3.8-27b."
 )
 @pay("$0.01")
 async def quick_scan(request: Request):
@@ -696,9 +698,9 @@ async def get_openapi_spec():
         "currency": "USDC",
         "network": "base-sepolia",
         "tiers": [
-            {"name": "Quick Scan", "endpoint": "/v1/audit/quick-scan", "price": "$0.01", "model": "llama-3.1-8b-instant"},
-            {"name": "Deep Audit", "endpoint": "/v1/audit/deep-repo", "price": "$0.50", "model": "llama-3.3-70b-versatile"},
-            {"name": "Remediation", "endpoint": "/v1/audit/remediate", "price": "$5.00", "model": "llama-3.3-70b-versatile"},
+            {"name": "Quick Scan", "endpoint": "/v1/audit/quick-scan", "price": "$0.01", "model": "qwen/qwen3.8-27b"},
+            {"name": "Deep Audit", "endpoint": "/v1/audit/deep-repo", "price": "$0.50", "model": "qwen/qwen3.8-27b"},
+            {"name": "Remediation", "endpoint": "/v1/audit/remediate", "price": "$5.00", "model": "qwen/qwen3.8-27b"},
             {"name": "Engagement Remediation", "endpoint": "/v1/engagement/remediation", "price": "$500.00", "model": "qwen/qwen3.8-27b"}
         ]
     }
@@ -739,7 +741,7 @@ async def get_mcp_manifest():
                 "endpoint": "/v1/audit/quick-scan",
                 "method": "POST",
                 "cost": "$0.01 USDC",
-                "model": "qwen/qwen3.6-27b",
+                "model": "qwen/qwen3.8-27b",
                 "input_schema": {
                     "type": "object",
                     "properties": {
