@@ -11,12 +11,14 @@ Usage:
 import os
 import re
 import datetime
+from pathlib import Path
 from typing import Optional
 
 from fpdf import FPDF
 
 FONT_DIR = r"C:\Windows\Fonts"
 REPORT_DIR = "reports"
+LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "pyresec-icon.png"
 
 # Font fallbacks: Windows dev box first, then container/system fonts.
 # Each entry: (directory, {family: {style: filename}})
@@ -236,7 +238,14 @@ def generate_report(scan: dict, meta: Optional[dict] = None, out_dir: str = REPO
     pdf.set_fill_color(20, 20, 24)
     pdf.rect(0, 0, 210, 105, style="F")
 
-    pdf.set_y(30)
+    # Official PYRESEC logo on every client deliverable.
+    if LOGO_PATH.exists():
+        logo_width = 26
+        pdf.image(str(LOGO_PATH), x=(210 - logo_width) / 2, y=12, w=logo_width)
+        pdf.set_y(42)
+    else:
+        pdf.set_y(30)
+
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Arial", "B", 30)
     pdf.cell(0, 14, "PYRESEC", align="C", new_x="LMARGIN", new_y="NEXT")
