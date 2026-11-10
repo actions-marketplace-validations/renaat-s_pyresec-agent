@@ -58,8 +58,8 @@ async def quick_scan_with_llm(code, groq_client):
     file_hash = compute_file_hash(code)
     sast_findings = run_sast_scan(code, full=False)
     prompt = f"Run a fast security scan. Return exactly 3 bullet points covering the most critical risks.\n\nCODE:\n```python\n{code[:6000]}\n```\n\nRespond with ONLY 3 bullet points, each starting with \"- \". No preamble."
-    completion = groq_client.chat.completions.create(model="qwen/qwen3.6-27b", messages=[{"role": "user", "content": prompt}], temperature=0.1, max_tokens=512)
-    return {"file_hash": file_hash, "sast_findings": sast_findings, "llm_findings": completion.choices[0].message.content, "model": "qwen/qwen3.6-27b"}
+    completion = groq_client.chat.completions.create(model="qwen/qwen3.8-27b", messages=[{"role": "user", "content": prompt}], temperature=0.1, max_tokens=512)
+    return {"file_hash": file_hash, "sast_findings": sast_findings, "llm_findings": completion.choices[0].message.content, "model": "qwen/qwen3.8-27b"}
 
 async def deep_audit_with_llm(code, groq_client):
     file_hash = compute_file_hash(code)

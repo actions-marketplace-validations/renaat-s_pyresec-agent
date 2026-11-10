@@ -60,6 +60,7 @@ def fetch_repo_main_file(repo: str) -> Optional[str]:
     candidates = [
         "main.py", "app.py", "index.js", "index.ts", "server.js",
         "src/main.py", "src/app.py", "src/index.js", "src/index.ts",
+        "src/main.jsx", "src/App.jsx", "src/main.tsx", "src/App.tsx",
         "app/main.py", "bot.py", "cli.py", "hardhat.config.js",
         "foundry.toml",
     ]

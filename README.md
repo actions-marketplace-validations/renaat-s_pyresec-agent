@@ -86,7 +86,7 @@ PYRESEC is a registered MCP tool. Any MCP-compatible client discovers it automat
 
 | Tier | Price | Endpoint | Description | Model |
 |------|-------|----------|-------------|-------|
-| **Quick Scan** | $0.01 | `POST /v1/audit/quick-scan` | Top 3 findings by severity, CWE IDs, line numbers | qwen3.6-27b |
+| **Quick Scan** | $0.01 | `POST /v1/audit/quick-scan` | Top 3 findings by severity, CWE IDs, line numbers | qwen3.8-27b |
 | **Deep Audit** | $0.50 | `POST /v1/audit/deep-repo` | OWASP Top 10, SCA dependency scanning, logic flaws, gas optimization | qwen3.8-27b |
 | **Remediation** | $5.00 | `POST /v1/audit/remediate` | Full patched code with change explanations and security notes | qwen3.8-27b |
 

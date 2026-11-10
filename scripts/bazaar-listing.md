@@ -28,7 +28,7 @@ AI-powered code security auditing via x402 micropayments. SAST/SCA scans from $0
 PYRESEC is an autonomous AI code security engine that accepts x402 USDC micropayments on Base Mainnet. No accounts, no API keys, no subscriptions — just code in, findings out.
 
 Three service tiers:
-• Quick Scan ($0.01) — Top 3 SAST findings by severity with CWE IDs and line numbers. Uses qwen3.6-27b.
+• Quick Scan ($0.01) — Top 3 SAST findings by severity with CWE IDs and line numbers. Uses qwen3.8-27b.
 • Deep Audit ($0.50) — Full OWASP Top 10, SCA dependency scanning, logic flaw detection, and Solidity gas optimization. Uses qwen3.8-27b.
 • Remediation ($5.00) — Complete patched code with change explanations, ready for a GitHub Pull Request. Uses qwen3.8-27b.
 

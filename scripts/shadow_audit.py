@@ -120,7 +120,7 @@ def run(limit: int = 1) -> list[str]:
             done[repo] = f"rated_{rating}"
             continue
 
-        findings = scan.get("findings", [])
+        findings = scan.get("sast_findings", []) + scan.get("sca_findings", []) + scan.get("gas_findings", [])
         md = content_engine.build_case_study(repo, code, scan, anonymize=True)
         social = content_engine._build_social_copy(repo, findings, anonymize=True)
 

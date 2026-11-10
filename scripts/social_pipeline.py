@@ -116,7 +116,7 @@ FALLBACK_NOTE = (
 
 def latest_case(case_arg: str = "") -> dict | None:
     """Locate the newest case study pair (md + social json)."""
-    mds = sorted(CASE_DIR.glob("case_study_*.md"))
+    mds = sorted(CASE_DIR.glob("case_study_*.md"), key=lambda p: p.stat().st_mtime)
     if case_arg:
         mds = [m for m in mds if case_arg.lower() in m.name.lower()] or mds
     if not mds:
